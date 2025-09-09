@@ -9,7 +9,7 @@
           <div class="card-body">
             <form @submit.prevent="handleRegister">
               <div class="mb-3">
-                <label class="form-label">Nome completo</label>
+                <label class="form-label">Nome completo:</label>
                 <input 
                   type="text" 
                   class="form-control" 
@@ -18,7 +18,7 @@
                 >
               </div>
               <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label">Email:</label>
                 <input 
                   type="email" 
                   class="form-control" 
@@ -27,7 +27,7 @@
                 >
               </div>
               <div class="mb-3">
-                <label class="form-label">Senha</label>
+                <label class="form-label">Senha:</label>
                 <input 
                   type="password" 
                   class="form-control" 
@@ -36,7 +36,7 @@
                 >
               </div>
               <div class="mb-3">
-                <label class="form-label">Confirmar senha</label>
+                <label class="form-label">Confirmar senha:</label>
                 <input 
                   type="password" 
                   class="form-control" 
