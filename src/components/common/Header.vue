@@ -41,10 +41,23 @@
               👤 {{ user?.name || 'Usuário' }}
             </button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Meu Perfil</a></li>
-              <li><a class="dropdown-item" href="#">Meus Pedidos</a></li>
+              <!-- Novo link para o perfil -->
+              <li>
+                <router-link to="/profile" class="dropdown-item">
+                  <i class="fas fa-user me-2"></i>Meu Perfil
+                </router-link>
+              </li>
+              <li>
+                <router-link to="/orders" class="dropdown-item">
+                  <i class="fas fa-shopping-bag me-2"></i>Meus Pedidos
+                </router-link>
+              </li>
               <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item" @click="logout">Sair</button></li>
+              <li>
+                <button class="dropdown-item" @click="logout">
+                  <i class="fas fa-sign-out-alt me-2"></i>Sair
+                </button>
+              </li>
             </ul>
           </div>
         </div>
@@ -74,5 +87,10 @@ export default {
 <style scoped>
 .navbar-brand {
   font-size: 1.5rem;
+}
+
+.dropdown-menu {
+  left: auto;
+  right: 0;
 }
 </style>

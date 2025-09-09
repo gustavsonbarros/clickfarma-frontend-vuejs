@@ -5,6 +5,9 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Cart from '../views/Cart.vue'
 import Checkout from '../views/Checkout.vue'
+import Profile from '../views/Profile.vue'
+import Addresses from '../views/Addresses.vue'
+
 
 const routes = [
   { 
@@ -37,7 +40,22 @@ const routes = [
     name: 'Checkout',
     component: Checkout,
     meta: { requiresAuth: true }
-  }
+  },
+
+   { 
+    path: '/profile', 
+    name: 'Profile',
+    component: Profile,
+    meta: { requiresAuth: true }
+  },
+
+  { 
+  path: '/addresses', 
+  name: 'Addresses',
+  component: Addresses,
+  meta: { requiresAuth: true }
+}
+
 ]
 
 const router = createRouter({

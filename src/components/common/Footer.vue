@@ -16,13 +16,15 @@
         </div>
         <div class="col-md-4">
           <h5>Contato</h5>
-          <p>📞 (11) 9999-9999</p>
-          <p>✉️ contato@clickfarma.com.br</p>
+          <p>📞 (81) 99818-9999</p>
+          <p>✉️ gustavson.adm@cgmail.com</p>
         </div>
       </div>
       <hr class="my-4">
       <div class="text-center">
         <p>&copy; 2024 ClickFarma. Todos os direitos reservados.</p>
+        <p>Desenvolvido por Gustavson Barros </p>
+        
       </div>
     </div>
   </footer>

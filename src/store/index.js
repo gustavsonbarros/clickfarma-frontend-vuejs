@@ -7,7 +7,8 @@ export default createStore({
     products: [],
     cart: [],
     categories: ['Medicamentos', 'Cosméticos', 'Higiene', 'Vitaminas', 'Maternidade'],
-    authToken: localStorage.getItem('authToken') || null
+    authToken: localStorage.getItem('authToken') || null,
+    addresses: []
   },
   
   getters: {
@@ -15,7 +16,10 @@ export default createStore({
     cartItemsCount: state => state.cart.reduce((total, item) => total + item.quantity, 0),
     cartTotal: state => state.cart.reduce((total, item) => total + (item.price * item.quantity), 0),
     products: state => state.products,
-    categories: state => state.categories
+    categories: state => state.categories,
+    user: state => state.user,
+    addresses: state => state.addresses,
+    defaultAddress: state => state.addresses.find(addr => addr.isDefault) || null
   },
   
   mutations: {
@@ -53,6 +57,32 @@ export default createStore({
     },
     CLEAR_CART(state) {
       state.cart = []
+    },
+    UPDATE_USER_PROFILE(state, userData) {
+      if (state.user) {
+        state.user = { ...state.user, ...userData }
+      }
+    },
+    SET_ADDRESSES(state, addresses) {
+      state.addresses = addresses
+    },
+    ADD_ADDRESS(state, address) {
+      state.addresses.push(address)
+    },
+    UPDATE_ADDRESS(state, updatedAddress) {
+      const index = state.addresses.findIndex(a => a.id === updatedAddress.id)
+      if (index !== -1) {
+        state.addresses.splice(index, 1, updatedAddress)
+      }
+    },
+    DELETE_ADDRESS(state, addressId) {
+      state.addresses = state.addresses.filter(a => a.id !== addressId)
+    },
+    SET_DEFAULT_ADDRESS(state, addressId) {
+      state.addresses = state.addresses.map(address => ({
+        ...address,
+        isDefault: address.id === addressId
+      }))
     }
   },
   
@@ -63,7 +93,14 @@ export default createStore({
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
-              user: { id: 1, name: credentials.email, email: credentials.email },
+              user: { 
+                id: 1, 
+                name: credentials.email, 
+                email: credentials.email,
+                phone: '(81) 99999-9999',
+                birthdate: '1990-01-01',
+                cpf: '123.456.789-00'
+              },
               token: 'mock-token-' + Math.random().toString(36).substr(2)
             }
           })
@@ -83,7 +120,14 @@ export default createStore({
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
-              user: { id: 2, name: userData.name, email: userData.email },
+              user: { 
+                id: 2, 
+                name: userData.name, 
+                email: userData.email,
+                phone: '',
+                birthdate: '',
+                cpf: ''
+              },
               token: 'mock-token-' + Math.random().toString(36).substr(2)
             }
           })
@@ -133,6 +177,137 @@ export default createStore({
     
     clearCart({ commit }) {
       commit('CLEAR_CART')
+    },
+    
+    async updateUserProfile({ commit, state }, userData) {
+      try {
+        // Simulação de API - em produção, substituir por chamada real
+        console.log('Enviando dados para atualização:', userData);
+        
+        const response = await new Promise(resolve => setTimeout(() => {
+          resolve({ 
+            data: { 
+              user: { 
+                ...state.user, 
+                ...userData 
+              },
+              message: 'Perfil atualizado com sucesso!'
+            }
+          })
+        }, 1000))
+        
+        commit('UPDATE_USER_PROFILE', userData)
+        return response.data
+      } catch (error) {
+        throw error.response ? error.response.data : { message: 'Erro ao atualizar perfil' }
+      }
+    },
+    
+    async changeUserPassword({ commit }, passwordData) {
+      try {
+        // Simulação de API - em produção, substituir por chamada real
+        console.log('Enviando dados para alteração de senha:', passwordData);
+        
+        const response = await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            // Simular validação
+            if (passwordData.newPassword !== passwordData.confirmPassword) {
+              reject({ response: { data: { message: 'As senhas não coincidem' } } })
+            } else if (passwordData.newPassword.length < 6) {
+              reject({ response: { data: { message: 'A senha deve ter pelo menos 6 caracteres' } } })
+            } else {
+              resolve({ 
+                data: { 
+                  message: 'Senha alterada com sucesso!'
+                }
+              })
+            }
+          }, 1000)
+        })
+        
+        return response.data
+      } catch (error) {
+        throw error.response ? error.response.data : { message: 'Erro ao alterar senha' }
+      }
+    },
+    
+    async fetchAddresses({ commit }) {
+      try {
+        // Simulação de API
+        const mockAddresses = [
+          {
+            id: 1,
+            nickname: 'Casa',
+            zipcode: '50720-001',
+            street: 'Rua Professor José Brandão',
+            number: '123',
+            neighborhood: 'Cidade Universitária',
+            complement: 'Apartmento 101',
+            city: 'Recife',
+            state: 'PE',
+            isDefault: true
+          },
+          {
+            id: 2,
+            nickname: 'Trabalho',
+            zipcode: '50030-230',
+            street: 'Av. Conde da Boa Vista',
+            number: '456',
+            neighborhood: 'Boa Vista',
+            complement: 'Sala 302',
+            city: 'Recife',
+            state: 'PE',
+            isDefault: false
+          }
+        ]
+        
+        commit('SET_ADDRESSES', mockAddresses)
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async addAddress({ commit }, addressData) {
+      try {
+        // Simulação de API
+        const newAddress = {
+          id: Date.now(),
+          ...addressData
+        }
+        
+        commit('ADD_ADDRESS', newAddress)
+        return newAddress
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async updateAddress({ commit }, addressData) {
+      try {
+        // Simulação de API
+        commit('UPDATE_ADDRESS', addressData)
+        return addressData
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async deleteAddress({ commit }, addressId) {
+      try {
+        // Simulação de API
+        commit('DELETE_ADDRESS', addressId)
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async setDefaultAddress({ commit }, addressId) {
+      try {
+        // Simulação de API
+        commit('SET_DEFAULT_ADDRESS', addressId)
+      } catch (error) {
+        throw error
+      }
     }
   }
 })

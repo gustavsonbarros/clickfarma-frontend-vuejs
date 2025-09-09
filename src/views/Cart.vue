@@ -1,60 +1,30 @@
 <template>
   <div class="container mt-4">
-    <h2>🛒 Meu Carrinho</h2>
-    <div v-if="cart.length === 0" class="text-center py-5">
-      <p class="text-muted">Seu carrinho está vazio</p>
-      <router-link to="/products" class="btn btn-primary">
-        Ver Produtos
-      </router-link>
-    </div>
+    <h2 class="page-title">🛒 Meu Carrinho</h2>
     
+    <!-- Carrinho vazio -->
+    <EmptyCart v-if="cart.length === 0" />
+    
+    <!-- Carrinho com itens -->
     <div v-else>
       <div class="row">
+        <!-- Lista de itens -->
         <div class="col-md-8">
-          <div v-for="item in cart" :key="item.id" class="card mb-3">
-            <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-md-2">
-                  <span style="font-size: 3rem;">💊</span>
-                </div>
-                <div class="col-md-4">
-                  <h5>{{ item.name }}</h5>
-                  <p class="text-muted">{{ item.description }}</p>
-                </div>
-                <div class="col-md-2">
-                  <input 
-                    type="number" 
-                    v-model.number="item.quantity" 
-                    min="1" 
-                    class="form-control"
-                    @change="updateQuantity(item.id, item.quantity)"
-                  >
-                </div>
-                <div class="col-md-2">
-                  <p class="fw-bold">R$ {{ (item.price * item.quantity).toFixed(2) }}</p>
-                </div>
-                <div class="col-md-2">
-                  <button @click="removeFromCart(item.id)" class="btn btn-danger">
-                    ❌
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <CartItem
+            v-for="item in cart"
+            :key="item.id"
+            :item="item"
+            @update-quantity="updateQuantity"
+            @remove-item="removeFromCart"
+          />
         </div>
+        
+        <!-- Resumo do pedido -->
         <div class="col-md-4">
-          <div class="card">
-            <div class="card-header">
-              <h5>Resumo do Pedido</h5>
-            </div>
-            <div class="card-body">
-              <p>Itens: {{ cartItemsCount }}</p>
-              <p>Total: R$ {{ cartTotal.toFixed(2) }}</p>
-              <router-link to="/checkout" class="btn btn-primary w-100">
-                Finalizar Compra
-              </router-link>
-            </div>
-          </div>
+          <OrderSummary
+            :items-count="cartItemsCount"
+            :total="cartTotal"
+          />
         </div>
       </div>
     </div>
@@ -63,9 +33,17 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
+import EmptyCart from '@/components/cart/EmptyCart.vue'
+import CartItem from '@/components/cart/CartItem.vue'
+import OrderSummary from '@/components/cart/OrderSummary.vue'
 
 export default {
-  name: 'Cart',
+  name: 'CartPage',
+  components: {
+    EmptyCart,
+    CartItem,
+    OrderSummary
+  },
   computed: {
     ...mapState(['cart']),
     ...mapGetters(['cartItemsCount', 'cartTotal'])
@@ -73,9 +51,17 @@ export default {
   methods: {
     ...mapActions(['removeFromCart', 'updateCartQuantity']),
     updateQuantity(productId, quantity) {
-      if (quantity < 1) quantity = 1
-      this.updateCartQuantity({ productId, quantity })
+      
+      const validQuantity = Math.max(1, quantity)
+      this.updateCartQuantity({ productId, quantity: validQuantity })
     }
   }
 }
 </script>
+
+<style scoped>
+.page-title {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+</style>
