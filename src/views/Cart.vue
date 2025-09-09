@@ -7,6 +7,7 @@
         Ver Produtos
       </router-link>
     </div>
+    
     <div v-else>
       <div class="row">
         <div class="col-md-8">
