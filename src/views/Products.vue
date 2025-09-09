@@ -60,7 +60,7 @@
       </div>
     </div>
 
-    <!-- Estado vazio -->
+    
     <div v-else class="text-center py-5 empty-state">
       <p>Nenhum produto encontrado.</p>
       <button 
@@ -116,7 +116,7 @@ export default {
       })
     },
     
-    // Ordena os produtos filtrados
+    
     sortedProducts() {
       if (!this.filteredProducts.length) return []
       
@@ -132,7 +132,7 @@ export default {
       })
     },
     
-    // Verifica se há filtros ativos
+    
     hasActiveFilters() {
       return this.searchTerm || this.filters.category
     }
@@ -167,7 +167,7 @@ export default {
       }, 300)
     },
     
-    // Adiciona produto ao carrinho
+    
     addToCart(product) {
       this.addToCart(product)
       

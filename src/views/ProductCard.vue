@@ -9,6 +9,7 @@
         {{ product.inStock ? 'Em estoque' : 'Fora de estoque' }}
       </p>
     </div>
+    
     <div class="card-footer">
       <button 
         @click="handleAddToCart" 
