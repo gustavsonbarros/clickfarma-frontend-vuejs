@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <!-- Loading state -->
+    
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Carregando...</span>
@@ -75,6 +75,7 @@
 </template>
 
 <script>
+
 import { mapState, mapActions } from 'vuex'
 import ProductCard from './ProductCard.vue'
 
@@ -98,7 +99,7 @@ export default {
   computed: {
     ...mapState(['products', 'categories']),
     
-    // Filtra produtos por termo de busca e categoria
+    
     filteredProducts() {
       if (!this.products.length) return []
       
