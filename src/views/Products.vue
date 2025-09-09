@@ -1,18 +1,21 @@
 <template>
   <div class="container mt-4">
-    <h2>📦 Nossos Produtos</h2>
+    <h2 class="page-title">📦 Nossos Produtos</h2>
     
-    <div class="row mb-4">
+    <!-- Filtros e busca -->
+    <div class="row mb-4 filters-section">
       <div class="col-md-6">
         <input 
-          v-model="searchTerm" 
+          v-model.lazy="searchTerm" 
           type="text" 
           class="form-control" 
           placeholder="Buscar produtos..."
+          aria-label="Buscar produtos"
+          @input="handleSearch"
         >
       </div>
       <div class="col-md-3">
-        <select v-model="filters.category" class="form-select">
+        <select v-model="filters.category" class="form-select" aria-label="Filtrar por categoria">
           <option value="">Todas categorias</option>
           <option v-for="cat in categories" :key="cat" :value="cat">
             {{ cat }}
@@ -20,84 +23,187 @@
         </select>
       </div>
       <div class="col-md-3">
-        <select v-model="filters.sortBy" class="form-select">
+        <select v-model="filters.sortBy" class="form-select" aria-label="Ordenar produtos">
           <option value="name">Ordenar por nome</option>
           <option value="price">Ordenar por preço</option>
         </select>
       </div>
     </div>
 
-    <div class="row">
-      <div v-for="product in filteredProducts" :key="product.id" class="col-md-4 mb-4">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <span style="font-size: 4rem;">💊</span>
-            <h5 class="card-title">{{ product.name }}</h5>
-            <p class="card-text">{{ product.description }}</p>
-            <p class="text-success fw-bold">R$ {{ product.price.toFixed(2) }}</p>
-            <p :class="{'text-success': product.inStock, 'text-danger': !product.inStock}">
-              {{ product.inStock ? 'Em estoque' : 'Fora de estoque' }}
-            </p>
-          </div>
-          <div class="card-footer">
-            <button 
-              @click="addToCart(product)" 
-              class="btn btn-primary w-100"
-              :disabled="!product.inStock"
-            >
-              {{ product.inStock ? 'Adicionar ao carrinho' : 'Indisponível' }}
-            </button>
-          </div>
-        </div>
+    <!-- Loading state -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
       </div>
+      <p class="mt-2">Carregando produtos...</p>
+    </div>
+
+    <!-- Mensagem de erro -->
+    <div v-else-if="error" class="alert alert-danger" role="alert">
+      {{ error }}
+    </div>
+
+    <!-- Lista de produtos -->
+    <div v-else-if="filteredProducts.length" class="row products-grid">
+      <div 
+        v-for="product in sortedProducts" 
+        :key="product.id" 
+        class="col-md-4 mb-4"
+      >
+        <ProductCard 
+          :product="product" 
+          @add-to-cart="addToCart"
+        />
+      </div>
+    </div>
+
+    <!-- Estado vazio -->
+    <div v-else class="text-center py-5 empty-state">
+      <p>Nenhum produto encontrado.</p>
+      <button 
+        v-if="hasActiveFilters" 
+        class="btn btn-outline-primary"
+        @click="clearFilters"
+      >
+        Limpar filtros
+      </button>
     </div>
   </div>
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex'
+import { mapState, mapActions } from 'vuex'
+import ProductCard from './ProductCard.vue'
 
 export default {
-  name: 'Products',
+  name: 'ProductsPage',
+  components: {
+    ProductCard
+  },
   data() {
     return {
       searchTerm: '',
       filters: {
         category: '',
         sortBy: 'name'
-      }
+      },
+      loading: false,
+      error: null,
+      searchTimeout: null
     }
   },
   computed: {
     ...mapState(['products', 'categories']),
+    
+    // Filtra produtos por termo de busca e categoria
     filteredProducts() {
-      let filtered = this.products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                             product.description.toLowerCase().includes(this.searchTerm.toLowerCase())
-        const matchesCategory = !this.filters.category || product.category === this.filters.category
+      if (!this.products.length) return []
+      
+      return this.products.filter(product => {
+        const matchesSearch = this.searchTerm 
+          ? product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+            product.description.toLowerCase().includes(this.searchTerm.toLowerCase())
+          : true
+        
+        const matchesCategory = this.filters.category 
+          ? product.category === this.filters.category 
+          : true
         
         return matchesSearch && matchesCategory
       })
-
-      // Ordenação
-      if (this.filters.sortBy === 'price') {
-        filtered.sort((a, b) => a.price - b.price)
-      } else {
-        filtered.sort((a, b) => a.name.localeCompare(b.name))
-      }
-
-      return filtered
+    },
+    
+    // Ordena os produtos filtrados
+    sortedProducts() {
+      if (!this.filteredProducts.length) return []
+      
+      // Criar cópia para não mutar o estado original
+      const products = [...this.filteredProducts]
+      
+      return products.sort((a, b) => {
+        if (this.filters.sortBy === 'price') {
+          return a.price - b.price
+        } else {
+          return a.name.localeCompare(b.name)
+        }
+      })
+    },
+    
+    // Verifica se há filtros ativos
+    hasActiveFilters() {
+      return this.searchTerm || this.filters.category
     }
   },
   async mounted() {
-    await this.fetchProducts()
+    await this.loadProducts()
   },
   methods: {
     ...mapActions(['fetchProducts', 'addToCart']),
+    
+    // Carrega produtos com tratamento de erro
+    async loadProducts() {
+      this.loading = true
+      this.error = null
+      
+      try {
+        await this.fetchProducts()
+      } catch (err) {
+        console.error('Erro ao carregar produtos:', err)
+        this.error = 'Não foi possível carregar os produtos. Tente novamente mais tarde.'
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // Adiciona debounce na busca
+    handleSearch() {
+      clearTimeout(this.searchTimeout)
+      this.searchTimeout = setTimeout(() => {
+        // Força atualização ao digitar (com lazy, só atualiza ao sair do campo)
+        this.$forceUpdate()
+      }, 300)
+    },
+    
+    // Adiciona produto ao carrinho
     addToCart(product) {
       this.addToCart(product)
-      alert(`${product.name} adicionado ao carrinho!`)
+      
+      // Poderia ser substituído por um toast/notificação mais elegante
+      this.$notify({
+        title: 'Adicionado ao carrinho',
+        message: `${product.name} adicionado com sucesso!`,
+        type: 'success'
+      })
+    },
+    
+    // Limpa todos os filtros
+    clearFilters() {
+      this.searchTerm = ''
+      this.filters = {
+        category: '',
+        sortBy: 'name'
+      }
     }
   }
 }
 </script>
+
+<style scoped>
+.page-title {
+  margin-bottom: 1.5rem;
+}
+
+.filters-section {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.products-grid {
+  transition: opacity 0.3s ease;
+}
+
+.empty-state {
+  color: #6c757d;
+}
+</style>

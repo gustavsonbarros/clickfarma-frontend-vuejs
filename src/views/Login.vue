@@ -9,7 +9,7 @@
           <div class="card-body">
             <form @submit.prevent="handleLogin">
               <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label">Email:</label>
                 <input 
                   type="email" 
                   class="form-control" 
@@ -18,7 +18,7 @@
                 >
               </div>
               <div class="mb-3">
-                <label class="form-label">Senha</label>
+                <label class="form-label">Senha:</label>
                 <input 
                   type="password" 
                   class="form-control" 
@@ -35,7 +35,7 @@
               </button>
             </form>
             <div class="text-center mt-3">
-              <p>Não tem conta? <router-link to="/register">Cadastre-se</router-link></p>
+              <p>Não tem conta? <router-link to="/register">Cadastre-se:</router-link></p>
             </div>
           </div>
         </div>
