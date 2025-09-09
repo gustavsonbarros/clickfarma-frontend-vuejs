@@ -2,7 +2,7 @@
   <div class="container mt-4">
     <h2 class="page-title">📦 Nossos Produtos</h2>
     
-    <!-- Filtros e busca -->
+    
     <div class="row mb-4 filters-section">
       <div class="col-md-6">
         <input 
@@ -14,6 +14,8 @@
           @input="handleSearch"
         >
       </div>
+
+
       <div class="col-md-3">
         <select v-model="filters.category" class="form-select" aria-label="Filtrar por categoria">
           <option value="">Todas categorias</option>
@@ -22,6 +24,7 @@
           </option>
         </select>
       </div>
+
       <div class="col-md-3">
         <select v-model="filters.sortBy" class="form-select" aria-label="Ordenar produtos">
           <option value="name">Ordenar por nome</option>
@@ -38,12 +41,12 @@
       <p class="mt-2">Carregando produtos...</p>
     </div>
 
-    <!-- Mensagem de erro -->
+    
     <div v-else-if="error" class="alert alert-danger" role="alert">
       {{ error }}
     </div>
 
-    <!-- Lista de produtos -->
+    
     <div v-else-if="filteredProducts.length" class="row products-grid">
       <div 
         v-for="product in sortedProducts" 
@@ -117,7 +120,7 @@ export default {
     sortedProducts() {
       if (!this.filteredProducts.length) return []
       
-      // Criar cópia para não mutar o estado original
+      
       const products = [...this.filteredProducts]
       
       return products.sort((a, b) => {
@@ -140,7 +143,7 @@ export default {
   methods: {
     ...mapActions(['fetchProducts', 'addToCart']),
     
-    // Carrega produtos com tratamento de erro
+    
     async loadProducts() {
       this.loading = true
       this.error = null
@@ -155,11 +158,11 @@ export default {
       }
     },
     
-    // Adiciona debounce na busca
+    
     handleSearch() {
       clearTimeout(this.searchTimeout)
       this.searchTimeout = setTimeout(() => {
-        // Força atualização ao digitar (com lazy, só atualiza ao sair do campo)
+        
         this.$forceUpdate()
       }, 300)
     },
@@ -168,7 +171,7 @@ export default {
     addToCart(product) {
       this.addToCart(product)
       
-      // Poderia ser substituído por um toast/notificação mais elegante
+      
       this.$notify({
         title: 'Adicionado ao carrinho',
         message: `${product.name} adicionado com sucesso!`,
