@@ -10,6 +10,8 @@ import Addresses from '../views/Addresses.vue'
 import ForgotPassword from '../views/ForgotPassword.vue'
 import ResetPassword from '../views/ResetPassword.vue'
 import ProductDetail from '../views/ProductDetail.vue'
+import OrderConfirmation from '../views/OrderConfirmation.vue'
+
 
 
 const routes = [
@@ -74,6 +76,13 @@ const routes = [
   name: 'ProductDetail',
   component: ProductDetail,
   props: true
+},
+{ 
+  path: '/order-confirmation/:orderId', 
+  name: 'OrderConfirmation',
+  component: OrderConfirmation,
+  props: true,
+  meta: { requiresAuth: true }
 }
 
 ]

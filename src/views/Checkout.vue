@@ -233,42 +233,44 @@ export default {
       this.selectedPaymentMethod = method
     },
     
-    async placeOrder() {
-      if (!this.canContinue) return
-      
-      this.processingOrder = true
-      
-      try {
-        const orderData = {
-          items: this.cart,
-          delivery: {
-            type: this.deliveryOption,
-            address: this.selectedAddress,
-            store: this.selectedStore,
-            price: this.deliveryPrice
-          },
-          payment: {
-            method: this.selectedPaymentMethod
-          },
-          total: this.orderTotal
-        }
-        
-        // Simular criação do pedido
-        const response = await this.createOrder(orderData)
-        this.order = response
-        
-        // Avançar para confirmação
-        this.currentStep = 4
-        
-        this.$toast.success('Pedido realizado com sucesso!')
-        
-      } catch (error) {
-        console.error('Erro ao finalizar pedido:', error)
-        this.$toast.error('Erro ao finalizar pedido. Tente novamente.')
-      } finally {
-        this.processingOrder = false
-      }
-    },
+    
+async placeOrder() {
+  if (!this.canContinue) return
+  
+  this.processingOrder = true
+  
+  try {
+    const orderData = {
+      items: this.cart,
+      delivery: {
+        type: this.deliveryOption,
+        address: this.selectedAddress,
+        store: this.selectedStore,
+        price: this.deliveryPrice
+      },
+      payment: {
+        method: this.selectedPaymentMethod
+      },
+      total: this.orderTotal
+    }
+    
+    const order = await this.createOrder(orderData)
+    
+    // Redirecionar para página de confirmação
+    this.$router.push({
+      name: 'OrderConfirmation',
+      params: { orderId: order.id }
+    })
+    
+    this.$toast.success('Pedido realizado com sucesso!')
+    
+  } catch (error) {
+    console.error('Erro ao finalizar pedido:', error)
+    this.$toast.error('Erro ao finalizar pedido. Tente novamente.')
+  } finally {
+    this.processingOrder = false
+  }
+},
     
     continueShopping() {
       this.$router.push('/products')

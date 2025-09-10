@@ -37,7 +37,12 @@ export default createStore({
 
     // Novos getters
     checkout: state => state.checkout,
-    orders: state => state.orders
+    orders: state => state.orders,
+
+    // Buscar pedido por ID
+    getOrderById: (state) => (orderId) => {
+      return state.orders.find(order => order.id === orderId)
+    }
   },
   
   mutations: {
@@ -222,8 +227,6 @@ export default createStore({
     
     async updateUserProfile({ commit, state }, userData) {
       try {
-        console.log('Enviando dados para atualização:', userData);
-        
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
@@ -245,8 +248,6 @@ export default createStore({
     
     async changeUserPassword({ commit }, passwordData) {
       try {
-        console.log('Enviando dados para alteração de senha:', passwordData);
-        
         const response = await new Promise((resolve, reject) => {
           setTimeout(() => {
             if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -254,11 +255,7 @@ export default createStore({
             } else if (passwordData.newPassword.length < 6) {
               reject({ response: { data: { message: 'A senha deve ter pelo menos 6 caracteres' } } })
             } else {
-              resolve({ 
-                data: { 
-                  message: 'Senha alterada com sucesso!'
-                }
-              })
+              resolve({ data: { message: 'Senha alterada com sucesso!' } })
             }
           }, 1000)
         })
@@ -347,14 +344,19 @@ export default createStore({
     setCheckoutInfo({ commit }, checkoutInfo) {
       commit('SET_CHECKOUT_INFO', checkoutInfo)
     },
-    async createOrder({ commit, state }, orderData) {
+    async createOrder({ commit }, orderData) {
       try {
+        const subtotal = orderData.items.reduce((total, item) => total + (item.price * item.quantity), 0)
+        const discount = orderData.payment.method === 'pix' ? subtotal * 0.05 : 0
+
         const order = {
           id: Math.random().toString(36).substr(2, 9).toUpperCase(),
           date: new Date().toISOString(),
           items: orderData.items,
           delivery: orderData.delivery,
           payment: orderData.payment,
+          subtotal,
+          discount,
           total: orderData.total,
           status: 'confirmed'
         }
@@ -372,11 +374,7 @@ export default createStore({
     async requestPasswordReset({ commit }, email) {
       try {
         const response = await new Promise(resolve => setTimeout(() => {
-          resolve({ 
-            data: { 
-              message: 'Email de redefinição enviado com sucesso!'
-            }
-          })
+          resolve({ data: { message: 'Email de redefinição enviado com sucesso!' } })
         }, 1000))
         
         return response.data
@@ -388,11 +386,7 @@ export default createStore({
     async resetPassword({ commit }, resetData) {
       try {
         const response = await new Promise(resolve => setTimeout(() => {
-          resolve({ 
-            data: { 
-              message: 'Senha redefinida com sucesso!'
-            }
-          })
+          resolve({ data: { message: 'Senha redefinida com sucesso!' } })
         }, 1000))
         
         return response.data
