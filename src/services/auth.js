@@ -17,6 +17,14 @@ export const authService = {
   async updateProfile(userData) {
     return api.put('/profile', userData)
   },
+
+  async requestPasswordReset(email) {
+  return api.post('/auth/forgot-password', { email })
+ },
+
+ async resetPassword(data) {
+  return api.post('/auth/reset-password', data)
+ },
   
   // Novo método para alterar senha
   async changePassword(passwordData) {

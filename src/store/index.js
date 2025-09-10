@@ -87,6 +87,7 @@ export default createStore({
   },
   
   actions: {
+
     async login({ commit }, credentials) {
       try {
         // Simulação de API
@@ -308,6 +309,43 @@ export default createStore({
       } catch (error) {
         throw error
       }
-    }
+    },
+
+    // Adicionar actions
+async requestPasswordReset({ commit }, email) {
+  try {
+    // Simulação de API
+    const response = await new Promise(resolve => setTimeout(() => {
+      resolve({ 
+        data: { 
+          message: 'Email de redefinição enviado com sucesso!'
+        }
+      })
+    }, 1000))
+    
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : { message: 'Erro ao solicitar redefinição de senha' }
+  }
+},
+
+async resetPassword({ commit }, resetData) {
+  try {
+    // Simulação de API
+    const response = await new Promise(resolve => setTimeout(() => {
+      resolve({ 
+        data: { 
+          message: 'Senha redefinida com sucesso!'
+        }
+      })
+    }, 1000))
+    
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : { message: 'Erro ao redefinir senha' }
+  }
+ }
+
+
   }
 })

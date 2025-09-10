@@ -7,6 +7,8 @@ import Cart from '../views/Cart.vue'
 import Checkout from '../views/Checkout.vue'
 import Profile from '../views/Profile.vue'
 import Addresses from '../views/Addresses.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
+import ResetPassword from '../views/ResetPassword.vue'
 
 
 const routes = [
@@ -54,7 +56,17 @@ const routes = [
   name: 'Addresses',
   component: Addresses,
   meta: { requiresAuth: true }
-}
+},
+{ 
+  path: '/forgot-password', 
+  name: 'ForgotPassword',
+  component: ForgotPassword 
+},
+{ 
+  path: '/reset-password', 
+  name: 'ResetPassword',
+  component: ResetPassword 
+}             
 
 ]
 

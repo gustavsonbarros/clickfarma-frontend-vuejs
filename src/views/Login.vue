@@ -35,7 +35,10 @@
               </button>
             </form>
             <div class="text-center mt-3">
-              <p>Não tem conta? <router-link to="/register">Cadastre-se:</router-link></p>
+              <p>Não tem conta? <router-link to="/register">Cadastre-se</router-link></p>
+              <p>
+                <router-link to="/forgot-password">Esqueci minha senha</router-link>
+              </p>
             </div>
           </div>
         </div>
