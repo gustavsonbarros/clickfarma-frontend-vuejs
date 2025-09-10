@@ -11,7 +11,8 @@
             type="radio" 
             id="credit-card" 
             value="credit_card" 
-            v-model="selectedMethod"
+            :checked="selectedMethod === 'credit_card'"
+            @change="updateMethod('credit_card')"
           >
           <label class="form-check-label w-100" for="credit-card">
             <div class="d-flex align-items-center">
@@ -65,7 +66,8 @@
             type="radio" 
             id="debit-card" 
             value="debit_card" 
-            v-model="selectedMethod"
+            :checked="selectedMethod === 'debit_card'"
+            @change="updateMethod('debit_card')"
           >
           <label class="form-check-label w-100" for="debit-card">
             <div class="d-flex align-items-center">
@@ -87,7 +89,8 @@
             type="radio" 
             id="pix" 
             value="pix" 
-            v-model="selectedMethod"
+            :checked="selectedMethod === 'pix'"
+            @change="updateMethod('pix')"
           >
           <label class="form-check-label w-100" for="pix">
             <div class="d-flex align-items-center">
@@ -109,7 +112,8 @@
             type="radio" 
             id="boleto" 
             value="boleto" 
-            v-model="selectedMethod"
+            :checked="selectedMethod === 'boleto'"
+            @change="updateMethod('boleto')"
           >
           <label class="form-check-label w-100" for="boleto">
             <div class="d-flex align-items-center">
@@ -130,7 +134,7 @@
         <i class="fas fa-lock fa-2x text-success me-3"></i>
         <div>
           <h6 class="mb-1">Pagamento Seguro</h6>
-          <p class="mb-0 small">Seus dados estão protegidos com criptografia de última geração.</p>
+          <p class="mb-0 small">Seus dados estão protegidos avec criptografia de última geração.</p>
         </div>
       </div>
     </div>
@@ -151,9 +155,9 @@ export default {
     }
   },
   emits: ['update:payment-method'],
-  watch: {
-    selectedMethod(newMethod) {
-      this.$emit('update:payment-method', newMethod)
+  methods: {
+    updateMethod(method) {
+      this.$emit('update:payment-method', method)
     }
   }
 }

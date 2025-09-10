@@ -8,7 +8,20 @@ export default createStore({
     cart: [],
     categories: ['Medicamentos', 'Cosméticos', 'Higiene', 'Vitaminas', 'Maternidade'],
     authToken: localStorage.getItem('authToken') || null,
-    addresses: []
+    addresses: [],
+    selectedProduct: null,
+
+    // Checkout centralizado
+    checkout: {
+      deliveryOption: null,
+      selectedAddress: null,
+      selectedStore: null,
+      paymentMethod: null,
+      deliveryPrice: 0
+    },
+
+    // Pedidos do usuário
+    orders: []
   },
   
   getters: {
@@ -19,7 +32,12 @@ export default createStore({
     categories: state => state.categories,
     user: state => state.user,
     addresses: state => state.addresses,
-    defaultAddress: state => state.addresses.find(addr => addr.isDefault) || null
+    defaultAddress: state => state.addresses.find(addr => addr.isDefault) || null,
+    selectedProduct: state => state.selectedProduct,
+
+    // Novos getters
+    checkout: state => state.checkout,
+    orders: state => state.orders
   },
   
   mutations: {
@@ -83,14 +101,32 @@ export default createStore({
         ...address,
         isDefault: address.id === addressId
       }))
+    },
+    SET_SELECTED_PRODUCT(state, product) {
+      state.selectedProduct = product
+    },
+
+    // Mutations do checkout
+    SET_CHECKOUT_INFO(state, checkoutInfo) {
+      state.checkout = { ...state.checkout, ...checkoutInfo }
+    },
+    ADD_ORDER(state, order) {
+      state.orders.push(order)
+    },
+    CLEAR_CHECKOUT(state) {
+      state.checkout = {
+        deliveryOption: null,
+        selectedAddress: null,
+        selectedStore: null,
+        paymentMethod: null,
+        deliveryPrice: 0
+      }
     }
   },
   
   actions: {
-
     async login({ commit }, credentials) {
       try {
-        // Simulação de API
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
@@ -117,7 +153,6 @@ export default createStore({
     
     async register({ commit }, userData) {
       try {
-        // Simulação de API
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
@@ -148,7 +183,6 @@ export default createStore({
     
     async fetchProducts({ commit }) {
       try {
-        // Dados mockados
         const mockProducts = [
           { id: 1, name: 'Paracetamol 500mg', price: 12.90, category: 'Medicamentos', description: 'Analgésico e antitérmico', inStock: true },
           { id: 2, name: 'Dipirona 500mg', price: 8.50, category: 'Medicamentos', description: 'Analgésico e antitérmico', inStock: true },
@@ -162,6 +196,12 @@ export default createStore({
       } catch (error) {
         console.error('Erro ao buscar produtos:', error)
       }
+    },
+
+    async fetchProductById({ commit, state }, productId) {
+      const product = state.products.find(p => p.id === productId)
+      commit('SET_SELECTED_PRODUCT', product)
+      return product
     },
     
     addToCart({ commit }, product) {
@@ -182,7 +222,6 @@ export default createStore({
     
     async updateUserProfile({ commit, state }, userData) {
       try {
-        // Simulação de API - em produção, substituir por chamada real
         console.log('Enviando dados para atualização:', userData);
         
         const response = await new Promise(resolve => setTimeout(() => {
@@ -206,12 +245,10 @@ export default createStore({
     
     async changeUserPassword({ commit }, passwordData) {
       try {
-        // Simulação de API - em produção, substituir por chamada real
         console.log('Enviando dados para alteração de senha:', passwordData);
         
         const response = await new Promise((resolve, reject) => {
           setTimeout(() => {
-            // Simular validação
             if (passwordData.newPassword !== passwordData.confirmPassword) {
               reject({ response: { data: { message: 'As senhas não coincidem' } } })
             } else if (passwordData.newPassword.length < 6) {
@@ -234,7 +271,6 @@ export default createStore({
     
     async fetchAddresses({ commit }) {
       try {
-        // Simulação de API
         const mockAddresses = [
           {
             id: 1,
@@ -270,7 +306,6 @@ export default createStore({
 
     async addAddress({ commit }, addressData) {
       try {
-        // Simulação de API
         const newAddress = {
           id: Date.now(),
           ...addressData
@@ -285,7 +320,6 @@ export default createStore({
 
     async updateAddress({ commit }, addressData) {
       try {
-        // Simulação de API
         commit('UPDATE_ADDRESS', addressData)
         return addressData
       } catch (error) {
@@ -295,7 +329,6 @@ export default createStore({
 
     async deleteAddress({ commit }, addressId) {
       try {
-        // Simulação de API
         commit('DELETE_ADDRESS', addressId)
       } catch (error) {
         throw error
@@ -304,48 +337,68 @@ export default createStore({
 
     async setDefaultAddress({ commit }, addressId) {
       try {
-        // Simulação de API
         commit('SET_DEFAULT_ADDRESS', addressId)
       } catch (error) {
         throw error
       }
     },
 
-    // Adicionar actions
-async requestPasswordReset({ commit }, email) {
-  try {
-    // Simulação de API
-    const response = await new Promise(resolve => setTimeout(() => {
-      resolve({ 
-        data: { 
-          message: 'Email de redefinição enviado com sucesso!'
+    // Checkout Actions
+    setCheckoutInfo({ commit }, checkoutInfo) {
+      commit('SET_CHECKOUT_INFO', checkoutInfo)
+    },
+    async createOrder({ commit, state }, orderData) {
+      try {
+        const order = {
+          id: Math.random().toString(36).substr(2, 9).toUpperCase(),
+          date: new Date().toISOString(),
+          items: orderData.items,
+          delivery: orderData.delivery,
+          payment: orderData.payment,
+          total: orderData.total,
+          status: 'confirmed'
         }
-      })
-    }, 1000))
-    
-    return response.data
-  } catch (error) {
-    throw error.response ? error.response.data : { message: 'Erro ao solicitar redefinição de senha' }
-  }
-},
+        
+        commit('ADD_ORDER', order)
+        commit('CLEAR_CART')
+        commit('CLEAR_CHECKOUT')
+        
+        return order
+      } catch (error) {
+        throw error
+      }
+    },
 
-async resetPassword({ commit }, resetData) {
-  try {
-    // Simulação de API
-    const response = await new Promise(resolve => setTimeout(() => {
-      resolve({ 
-        data: { 
-          message: 'Senha redefinida com sucesso!'
-        }
-      })
-    }, 1000))
-    
-    return response.data
-  } catch (error) {
-    throw error.response ? error.response.data : { message: 'Erro ao redefinir senha' }
-  }
- }
+    async requestPasswordReset({ commit }, email) {
+      try {
+        const response = await new Promise(resolve => setTimeout(() => {
+          resolve({ 
+            data: { 
+              message: 'Email de redefinição enviado com sucesso!'
+            }
+          })
+        }, 1000))
+        
+        return response.data
+      } catch (error) {
+        throw error.response ? error.response.data : { message: 'Erro ao solicitar redefinição de senha' }
+      }
+    },
 
-
+    async resetPassword({ commit }, resetData) {
+      try {
+        const response = await new Promise(resolve => setTimeout(() => {
+          resolve({ 
+            data: { 
+              message: 'Senha redefinida com sucesso!'
+            }
+          })
+        }, 1000))
+        
+        return response.data
+      } catch (error) {
+        throw error.response ? error.response.data : { message: 'Erro ao redefinir senha' }
+      }
+    }
   }
 })

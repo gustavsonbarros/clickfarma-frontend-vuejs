@@ -9,6 +9,7 @@ import Profile from '../views/Profile.vue'
 import Addresses from '../views/Addresses.vue'
 import ForgotPassword from '../views/ForgotPassword.vue'
 import ResetPassword from '../views/ResetPassword.vue'
+import ProductDetail from '../views/ProductDetail.vue'
 
 
 const routes = [
@@ -66,7 +67,14 @@ const routes = [
   path: '/reset-password', 
   name: 'ResetPassword',
   component: ResetPassword 
-}             
+},
+
+{ 
+  path: '/product/:id', 
+  name: 'ProductDetail',
+  component: ProductDetail,
+  props: true
+}
 
 ]
 

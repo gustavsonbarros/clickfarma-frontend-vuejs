@@ -2,7 +2,7 @@
   <div class="container mt-4">
     <h2 class="page-title">📦 Nossos Produtos</h2>
     
-    
+    <!-- Filtros -->
     <div class="row mb-4 filters-section">
       <div class="col-md-6">
         <input 
@@ -14,7 +14,6 @@
           @input="handleSearch"
         >
       </div>
-
 
       <div class="col-md-3">
         <select v-model="filters.category" class="form-select" aria-label="Filtrar por categoria">
@@ -33,7 +32,7 @@
       </div>
     </div>
 
-    
+    <!-- Loading -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Carregando...</span>
@@ -41,17 +40,19 @@
       <p class="mt-2">Carregando produtos...</p>
     </div>
 
-    
+    <!-- Erro -->
     <div v-else-if="error" class="alert alert-danger" role="alert">
       {{ error }}
     </div>
 
-    
+    <!-- Produtos -->
     <div v-else-if="filteredProducts.length" class="row products-grid">
       <div 
         v-for="product in sortedProducts" 
         :key="product.id" 
         class="col-md-4 mb-4"
+        @click="viewProductDetail(product.id)"
+        style="cursor: pointer;"
       >
         <ProductCard 
           :product="product" 
@@ -60,7 +61,7 @@
       </div>
     </div>
 
-    
+    <!-- Nenhum produto -->
     <div v-else class="text-center py-5 empty-state">
       <p>Nenhum produto encontrado.</p>
       <button 
@@ -75,9 +76,8 @@
 </template>
 
 <script>
-
 import { mapState, mapActions } from 'vuex'
-import ProductCard from './ProductCard.vue'
+import ProductCard from '../components/products/ProductCard.vue'
 
 export default {
   name: 'ProductsPage',
@@ -99,7 +99,6 @@ export default {
   computed: {
     ...mapState(['products', 'categories']),
     
-    
     filteredProducts() {
       if (!this.products.length) return []
       
@@ -117,10 +116,8 @@ export default {
       })
     },
     
-    
     sortedProducts() {
       if (!this.filteredProducts.length) return []
-      
       
       const products = [...this.filteredProducts]
       
@@ -133,7 +130,6 @@ export default {
       })
     },
     
-    
     hasActiveFilters() {
       return this.searchTerm || this.filters.category
     }
@@ -143,7 +139,6 @@ export default {
   },
   methods: {
     ...mapActions(['fetchProducts', 'addToCart']),
-    
     
     async loadProducts() {
       this.loading = true
@@ -159,20 +154,15 @@ export default {
       }
     },
     
-    
     handleSearch() {
       clearTimeout(this.searchTimeout)
       this.searchTimeout = setTimeout(() => {
-        
         this.$forceUpdate()
       }, 300)
     },
     
-    
     addToCart(product) {
       this.addToCart(product)
-      
-      
       this.$notify({
         title: 'Adicionado ao carrinho',
         message: `${product.name} adicionado com sucesso!`,
@@ -180,13 +170,17 @@ export default {
       })
     },
     
-    // Limpa todos os filtros
     clearFilters() {
       this.searchTerm = ''
       this.filters = {
         category: '',
         sortBy: 'name'
       }
+    },
+
+    
+    viewProductDetail(productId) {
+      this.$router.push(`/product/${productId}`)
     }
   }
 }
