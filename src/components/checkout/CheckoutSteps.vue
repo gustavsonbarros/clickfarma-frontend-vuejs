@@ -6,12 +6,13 @@
         :key="step.name" 
         class="step"
         :class="{
-          'active': index === currentStep,
-          'completed': index < currentStep
+          'active': index + 1 === currentStep,
+          'completed': index + 1 < currentStep,
+          'disabled': index + 1 > currentStep
         }"
       >
         <div class="step-icon">
-          <span v-if="index < currentStep" class="completed-icon">
+          <span v-if="index + 1 < currentStep" class="completed-icon">
             <i class="fas fa-check"></i>
           </span>
           <span v-else class="step-number">{{ index + 1 }}</span>
@@ -28,15 +29,16 @@ export default {
   props: {
     currentStep: {
       type: Number,
-      default: 0
+      default: 1,
+      validator: value => value >= 1 && value <= 4
     }
   },
   data() {
     return {
       steps: [
-        { name: 'cart', label: 'Carrinho' },
         { name: 'delivery', label: 'Entrega' },
         { name: 'payment', label: 'Pagamento' },
+        { name: 'review', label: 'Revisão' },
         { name: 'confirmation', label: 'Confirmação' }
       ]
     }
@@ -46,15 +48,17 @@ export default {
 
 <style scoped>
 .checkout-steps {
-  padding: 20px 0;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .steps {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 600px;
-  margin: 0 auto;
   position: relative;
 }
 
@@ -75,6 +79,7 @@ export default {
   align-items: center;
   position: relative;
   z-index: 2;
+  flex: 1;
 }
 
 .step-icon {
@@ -100,6 +105,7 @@ export default {
   color: #6c757d;
   text-align: center;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .step.active .step-icon {
@@ -129,8 +135,15 @@ export default {
   color: #198754;
 }
 
-/* Responsividade */
-@media (max-width: 576px) {
+.step.disabled .step-icon {
+  background-color: #f8f9fa;
+}
+
+.step.disabled .step-label {
+  color: #adb5bd;
+}
+
+@media (max-width: 768px) {
   .step-label {
     font-size: 0.75rem;
   }
@@ -138,6 +151,10 @@ export default {
   .step-icon {
     width: 32px;
     height: 32px;
+  }
+  
+  .steps::before {
+    top: 16px;
   }
 }
 </style>
