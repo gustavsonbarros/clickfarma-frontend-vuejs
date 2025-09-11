@@ -246,42 +246,42 @@ export default createStore({
     
     async updateUserProfile({ commit, state }, userData) {
       try {
-        const response = await new Promise(resolve => setTimeout(() => {
-          resolve({ 
-            data: { 
-              user: { 
-                ...state.user, 
-                ...userData 
-              },
-              message: 'Perfil atualizado com sucesso!'
-            }
-          })
-        }, 1000))
+        // Simulação de API
+        const updatedUser = {
+          ...state.user,
+          ...userData
+        }
         
-        commit('UPDATE_USER_PROFILE', userData)
-        return response.data
+        commit('SET_USER', updatedUser)
+        return { message: 'Perfil atualizado com sucesso!' }
       } catch (error) {
-        throw error.response ? error.response.data : { message: 'Erro ao atualizar perfil' }
+        throw error.response?.data || { message: 'Erro ao atualizar perfil' }
       }
     },
+
     
     async changeUserPassword({ commit }, passwordData) {
       try {
-        const response = await new Promise((resolve, reject) => {
+        // Simulação de API com timeout
+        await new Promise((resolve, reject) => {
           setTimeout(() => {
-            if (passwordData.newPassword !== passwordData.confirmPassword) {
-              reject({ response: { data: { message: 'As senhas não coincidem' } } })
+            // Simular validação de senha (para teste)
+            if (passwordData.currentPassword === 'senhaerrada') {
+              reject({ message: 'Senha atual incorreta' })
             } else if (passwordData.newPassword.length < 6) {
-              reject({ response: { data: { message: 'A senha deve ter pelo menos 6 caracteres' } } })
+              reject({ message: 'Nova senha deve ter pelo menos 6 caracteres' })
             } else {
-              resolve({ data: { message: 'Senha alterada com sucesso!' } })
+              resolve({ message: 'Senha alterada com sucesso!' })
             }
           }, 1000)
         })
         
-        return response.data
+        return { message: 'Senha alterada com sucesso!' }
       } catch (error) {
-        throw error.response ? error.response.data : { message: 'Erro ao alterar senha' }
+        // CORREÇÃO: Lançar erro de forma consistente
+        const errorObj = new Error(error.message || 'Erro ao alterar senha')
+        errorObj.originalError = error
+        throw errorObj
       }
     },
     
