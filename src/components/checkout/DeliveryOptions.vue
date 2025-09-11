@@ -15,7 +15,8 @@
               type="radio" 
               id="delivery-home" 
               value="delivery" 
-              v-model="selectedOption"
+              :checked="selectedOption === 'delivery'"
+              @change="updateOption('delivery')"
             >
             <label class="form-check-label w-100" for="delivery-home">
               <div class="d-flex justify-content-between align-items-center">
@@ -56,7 +57,8 @@
               type="radio" 
               id="pickup-store" 
               value="pickup" 
-              v-model="selectedOption"
+              :checked="selectedOption === 'pickup'"
+              @change="updateOption('pickup')"
             >
             <label class="form-check-label w-100" for="pickup-store">
               <div class="d-flex justify-content-between align-items-center">
@@ -180,18 +182,22 @@ export default {
     }
   },
   watch: {
-    selectedOption(newValue) {
-      this.$emit('update:delivery-option', newValue)
+    selectedDeliveryOption(newValue) {
+      this.selectedOption = newValue
+    }
+  },
+  methods: {
+    updateOption(option) {
+      this.selectedOption = option
+      this.$emit('update:delivery-option', option)
       
       // Limpar seleções quando mudar a opção
-      if (newValue === 'delivery') {
+      if (option === 'delivery') {
         this.$emit('update:selected-store', null)
       } else {
         this.$emit('update:selected-address', null)
       }
-    }
-  },
-  methods: {
+    },
     handleAddressSelect(address) {
       this.$emit('update:selected-address', address)
     },

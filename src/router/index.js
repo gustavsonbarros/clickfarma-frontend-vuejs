@@ -11,6 +11,7 @@ import ForgotPassword from '../views/ForgotPassword.vue'
 import ResetPassword from '../views/ResetPassword.vue'
 import ProductDetail from '../views/ProductDetail.vue'
 import OrderConfirmation from '../views/OrderConfirmation.vue'
+import Prescriptions from '../views/Prescriptions.vue'
 
 
 
@@ -82,6 +83,12 @@ const routes = [
   name: 'OrderConfirmation',
   component: OrderConfirmation,
   props: true,
+  meta: { requiresAuth: true }
+},
+{
+  path: '/prescriptions',
+  name: 'Prescriptions',
+  component: Prescriptions,
   meta: { requiresAuth: true }
 }
 

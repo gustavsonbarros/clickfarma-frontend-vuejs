@@ -134,7 +134,7 @@
         <i class="fas fa-lock fa-2x text-success me-3"></i>
         <div>
           <h6 class="mb-1">Pagamento Seguro</h6>
-          <p class="mb-0 small">Seus dados estão protegidos avec criptografia de última geração.</p>
+          <p class="mb-0 small">Seus dados estão protegidos com criptografia de última geração.</p>
         </div>
       </div>
     </div>

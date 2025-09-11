@@ -21,7 +21,10 @@ export default createStore({
     },
 
     // Pedidos do usuário
-    orders: []
+    orders: [],
+
+    // Prescrições médicas
+    prescriptions: []
   },
   
   getters: {
@@ -34,10 +37,9 @@ export default createStore({
     addresses: state => state.addresses,
     defaultAddress: state => state.addresses.find(addr => addr.isDefault) || null,
     selectedProduct: state => state.selectedProduct,
-
-    // Novos getters
     checkout: state => state.checkout,
     orders: state => state.orders,
+    prescriptions: state => state.prescriptions,
 
     // Buscar pedido por ID
     getOrderById: (state) => (orderId) => {
@@ -126,6 +128,23 @@ export default createStore({
         paymentMethod: null,
         deliveryPrice: 0
       }
+    },
+
+    // Mutations de prescrições
+    SET_PRESCRIPTIONS(state, prescriptions) {
+      state.prescriptions = prescriptions
+    },
+    ADD_PRESCRIPTION(state, prescription) {
+      state.prescriptions.push(prescription)
+    },
+    UPDATE_PRESCRIPTION(state, updatedPrescription) {
+      const index = state.prescriptions.findIndex(p => p.id === updatedPrescription.id)
+      if (index !== -1) {
+        state.prescriptions.splice(index, 1, updatedPrescription)
+      }
+    },
+    DELETE_PRESCRIPTION(state, prescriptionId) {
+      state.prescriptions = state.prescriptions.filter(p => p.id !== prescriptionId)
     }
   },
   
@@ -392,6 +411,94 @@ export default createStore({
         return response.data
       } catch (error) {
         throw error.response ? error.response.data : { message: 'Erro ao redefinir senha' }
+      }
+    },
+
+    // Prescriptions Actions
+    async fetchPrescriptions({ commit }) {
+      try {
+        const mockPrescriptions = [
+          {
+            id: 1,
+            doctorName: 'Dr. Carlos Silva',
+            doctorCrm: 'CRM/PE 12345',
+            prescriptionDate: '2024-01-15',
+            expiryDate: '2024-02-15',
+            medications: 'Paracetamol 500mg - 2x ao dia\nDipirona 500mg - 1x ao dia',
+            notes: 'Tomar após as refeições',
+            status: 'approved',
+            fileUrl: null,
+            createdAt: '2024-01-15T10:30:00'
+          },
+          {
+            id: 2,
+            doctorName: 'Dra. Maria Santos',
+            doctorCrm: 'CRM/PE 67890',
+            prescriptionDate: '2024-01-20',
+            expiryDate: '2024-02-20',
+            medications: 'Omeprazol 20mg - 1x ao dia\nAmoxicilina 500mg - 3x ao dia',
+            notes: 'Completar o tratamento',
+            status: 'pending',
+            fileUrl: null,
+            createdAt: '2024-01-20T14:45:00'
+          }
+        ]
+        
+        commit('SET_PRESCRIPTIONS', mockPrescriptions)
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async uploadPrescription({ commit }, formData) {
+      try {
+        const newPrescription = {
+          id: Date.now(),
+          doctorName: formData.get('doctorName'),
+          doctorCrm: formData.get('doctorCrm'),
+          prescriptionDate: formData.get('prescriptionDate'),
+          expiryDate: formData.get('expiryDate'),
+          medications: formData.get('medications'),
+          notes: formData.get('notes'),
+          status: 'pending',
+          fileUrl: null,
+          createdAt: new Date().toISOString()
+        }
+        
+        commit('ADD_PRESCRIPTION', newPrescription)
+        return newPrescription
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async updatePrescription({ commit }, formData) {
+      try {
+        const updatedPrescription = {
+          id: formData.get('id'),
+          doctorName: formData.get('doctorName'),
+          doctorCrm: formData.get('doctorCrm'),
+          prescriptionDate: formData.get('prescriptionDate'),
+          expiryDate: formData.get('expiryDate'),
+          medications: formData.get('medications'),
+          notes: formData.get('notes'),
+          status: 'pending',
+          fileUrl: null,
+          createdAt: new Date().toISOString()
+        }
+        
+        commit('UPDATE_PRESCRIPTION', updatedPrescription)
+        return updatedPrescription
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async deletePrescription({ commit }, prescriptionId) {
+      try {
+        commit('DELETE_PRESCRIPTION', prescriptionId)
+      } catch (error) {
+        throw error
       }
     }
   }
