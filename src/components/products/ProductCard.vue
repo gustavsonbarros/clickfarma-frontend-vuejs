@@ -1,9 +1,9 @@
 <template>
-  <router-link 
-    :to="`/product/${product.id}`" 
-    class="text-decoration-none text-dark"
-  >
-    <div class="card h-100 product-card">
+  <div class="card h-100 product-card">
+    <router-link 
+      :to="`/product/${product.id}`" 
+      class="text-decoration-none text-dark"
+    >
       <div class="card-body text-center">
         <div class="product-icon">💊</div>
         <h5 class="card-title">{{ product.name }}</h5>
@@ -13,19 +13,19 @@
           {{ product.inStock ? 'Em estoque' : 'Fora de estoque' }}
         </p>
       </div>
-      
-      <div class="card-footer">
-        <button 
-          @click.stop="handleAddToCart" 
-          class="btn btn-primary w-100"
-          :disabled="!product.inStock"
-          :aria-label="`Adicionar ${product.name} ao carrinho`"
-        >
-          {{ product.inStock ? 'Adicionar ao carrinho' : 'Indisponível' }}
-        </button>
-      </div>
+    </router-link>
+    
+    <div class="card-footer">
+      <button 
+        @click="handleAddToCart" 
+        class="btn btn-primary w-100"
+        :disabled="!product.inStock"
+        :aria-label="`Adicionar ${product.name} ao carrinho`"
+      >
+        {{ product.inStock ? 'Adicionar ao carrinho' : 'Indisponível' }}
+      </button>
     </div>
-  </router-link>
+  </div>
 </template>
 
 <script>
@@ -58,7 +58,8 @@ export default {
     }
   },
   methods: {
-    handleAddToCart() {
+    handleAddToCart(event) {
+      event.stopPropagation() // Impede a propagação do evento
       this.$emit('add-to-cart', this.product)
     }
   }

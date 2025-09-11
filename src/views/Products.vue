@@ -56,7 +56,7 @@
       >
         <ProductCard 
           :product="product" 
-          @add-to-cart="addToCart"
+          @add-to-cart="handleAddToCart"
         />
       </div>
     </div>
@@ -161,13 +161,20 @@ export default {
       }, 300)
     },
     
-    addToCart(product) {
+    handleAddToCart(product) {
       this.addToCart(product)
-      this.$notify({
-        title: 'Adicionado ao carrinho',
-        message: `${product.name} adicionado com sucesso!`,
-        type: 'success'
-      })
+      
+      // Verifica se $notify existe antes de usar
+      if (typeof this.$notify === 'function') {
+        this.$notify({
+          title: 'Adicionado ao carrinho',
+          message: `${product.name} adicionado com sucesso!`,
+          type: 'success'
+        })
+      } else {
+        // Fallback alternativo
+        alert(`${product.name} adicionado ao carrinho!`)
+      }
     },
     
     clearFilters() {
@@ -178,7 +185,6 @@ export default {
       }
     },
 
-    
     viewProductDetail(productId) {
       this.$router.push(`/product/${productId}`)
     }
