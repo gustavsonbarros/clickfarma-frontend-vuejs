@@ -1,3 +1,4 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Products from '../views/Products.vue'
@@ -11,6 +12,15 @@ import Addresses from '../views/Addresses.vue'
 import ResetPassword from '../views/ResetPassword.vue'
 import Prescriptions from '../views/Prescriptions.vue'
 import OrderConfirmation from '../views/OrderConfirmation.vue'
+
+// Import das views do admin
+import AdminLogin from '../views/admin/AdminLogin.vue'
+import AdminDashboard from '../views/admin/AdminDashboard.vue'
+import ProductManagement from '../views/admin/ProductManagement.vue'
+import InventoryManagement from '../views/admin/InventoryManagement.vue'
+import OrderManagement from '../views/admin/OrderManagement.vue'
+import PrescriptionValidation from '../views/admin/PrescriptionValidation.vue'
+import UserManagement from '../views/admin/UserManagement.vue'
 
 const routes = [
   { 
@@ -84,6 +94,49 @@ const routes = [
     name: 'Payment',
     component: () => import('../components/checkout/PaymentMethod.vue'),
     meta: { requiresAuth: true }
+  },
+  // Rota para Login Admin
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: AdminLogin
+  },
+  // Rotas do Painel Administrativo
+  {
+    path: '/admin',
+    component: AdminDashboard,
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      {
+        path: '',
+        redirect: '/admin/products'
+      },
+      {
+        path: 'products',
+        name: 'AdminProducts',
+        component: ProductManagement
+      },
+      {
+        path: 'inventory',
+        name: 'AdminInventory',
+        component: InventoryManagement
+      },
+      {
+        path: 'orders',
+        name: 'AdminOrders',
+        component: OrderManagement
+      },
+      {
+        path: 'prescriptions',
+        name: 'AdminPrescriptions',
+        component: PrescriptionValidation
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: UserManagement
+      }
+    ]
   }
 ]
 
@@ -95,9 +148,17 @@ const router = createRouter({
 // Middleware de autenticação
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('authToken')
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const isAdmin = user.role === 'admin'
   
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
+    if (to.path.startsWith('/admin')) {
+      next('/admin/login')
+    } else {
+      next('/login')
+    }
+  } else if (to.meta.requiresAdmin && !isAdmin) {
+    next('/')
   } else {
     next()
   }

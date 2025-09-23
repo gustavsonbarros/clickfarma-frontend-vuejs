@@ -223,7 +223,11 @@ export default createStore({
     categories: ['Medicamentos', 'Cosméticos', 'Higiene', 'Vitaminas', 'Maternidade'],
     authToken: localStorage.getItem('authToken') || null,
     lastOrder: null,
-    paymentMethod: null
+    paymentMethod: null,
+    adminProducts: [],
+    adminOrders: [],
+    adminPrescriptions: [],
+    adminUsers: []
   },
   
   getters: {
@@ -231,7 +235,11 @@ export default createStore({
     cartItemsCount: state => state.cart.reduce((total, item) => total + item.quantity, 0),
     cartTotal: state => state.cart.reduce((total, item) => total + (item.price * item.quantity), 0),
     products: state => state.products,
-    categories: state => state.categories
+    categories: state => state.categories,
+    adminProducts: state => state.adminProducts,
+    adminOrders: state => state.adminOrders,
+    adminPrescriptions: state => state.adminPrescriptions,
+    adminUsers: state => state.adminUsers
   },
   
   mutations: {
@@ -275,6 +283,18 @@ export default createStore({
     },
     SET_PAYMENT_METHOD(state, method) {
       state.paymentMethod = method;
+    },
+    SET_ADMIN_PRODUCTS(state, products) {
+      state.adminProducts = products
+    },
+    SET_ADMIN_ORDERS(state, orders) {
+      state.adminOrders = orders
+    },
+    SET_ADMIN_PRESCRIPTIONS(state, prescriptions) {
+      state.adminPrescriptions = prescriptions
+    },
+    SET_ADMIN_USERS(state, users) {
+      state.adminUsers = users
     }
   },
   
@@ -285,7 +305,7 @@ export default createStore({
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
-              user: { id: 1, name: credentials.email, email: credentials.email },
+              user: { id: 1, name: credentials.email, email: credentials.email, role: 'user' },
               token: 'mock-token-' + Math.random().toString(36).substr(2)
             }
           })
@@ -305,7 +325,7 @@ export default createStore({
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
-              user: { id: 2, name: userData.name, email: userData.email },
+              user: { id: 2, name: userData.name, email: userData.email, role: 'user' },
               token: 'mock-token-' + Math.random().toString(36).substr(2)
             }
           })
@@ -430,6 +450,39 @@ export default createStore({
         return { success: true }
       } catch (error) {
         throw new Error('Erro ao atualizar perfil')
+      }
+    },
+    
+    // Admin actions
+    async fetchAdminProducts({ commit }) {
+      try {
+        // Mock data - substituir por API real
+        const mockProducts = [
+          { id: 1, name: 'Paracetamol 500mg', price: 12.90, category: 'Medicamentos', stock: 150, status: 'active' },
+          { id: 2, name: 'Dipirona 500mg', price: 8.50, category: 'Medicamentos', stock: 89, status: 'active' },
+          { id: 3, name: 'Shampoo Anti-Caspa', price: 24.90, category: 'Higiene', stock: 45, status: 'active' },
+          { id: 4, name: 'Vitamina C 1000mg', price: 45.00, category: 'Vitaminas', stock: 23, status: 'inactive' }
+        ]
+        commit('SET_ADMIN_PRODUCTS', mockProducts)
+      } catch (error) {
+        console.error('Erro ao buscar produtos admin:', error)
+      }
+    },
+    
+    async updateProductStock({ commit }, { productId, newStock }) {
+      try {
+        // Mock - substituir por API real
+        await new Promise(resolve => setTimeout(resolve, 500))
+        // Atualizar localmente
+        const products = JSON.parse(JSON.stringify(this.state.adminProducts))
+        const product = products.find(p => p.id === productId)
+        if (product) {
+          product.stock = newStock
+          commit('SET_ADMIN_PRODUCTS', products)
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar estoque:', error)
+        throw error
       }
     }
   }
