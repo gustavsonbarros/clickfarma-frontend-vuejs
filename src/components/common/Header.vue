@@ -59,15 +59,83 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'Header',
+  data() {
+    return {
+      isNavbarInitialized: false
+    }
+  },
   computed: {
     ...mapGetters(['isAuthenticated', 'cartItemsCount', 'user'])
   },
+  mounted() {
+    console.log('🔧 Componente Header montado - inicializando...');
+    this.initializeHeader();
+  },
   methods: {
-    ...mapActions(['logout']),
+    ...mapActions(['logout', 'checkAuthStatus']),
+    
+    async initializeHeader() {
+      try {
+        console.log('🔐 Verificando status de autenticação...');
+        await this.checkAuthStatus();
+        
+        // Inicializar componentes Bootstrap se necessário
+        this.initializeBootstrapComponents();
+        
+        // Configurar event listeners
+        this.setupEventListeners();
+        
+      } catch (error) {
+        console.error('❌ Erro ao inicializar header:', error);
+      }
+    },
+    
+    initializeBootstrapComponents() {
+      // Inicializar dropdowns e outros componentes Bootstrap
+      if (typeof bootstrap !== 'undefined') {
+        const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+        const dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+          return new bootstrap.Dropdown(dropdownToggleEl);
+        });
+        
+        this.isNavbarInitialized = true;
+        console.log('✅ Componentes Bootstrap inicializados');
+      }
+    },
+    
+    setupEventListeners() {
+      // Event listener para fechar dropdown ao clicar fora
+      document.addEventListener('click', this.handleDocumentClick);
+    },
+    
+    handleDocumentClick(event) {
+      const dropdowns = document.querySelectorAll('.dropdown');
+      dropdowns.forEach(dropdown => {
+        if (!dropdown.contains(event.target)) {
+          const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+          if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+            const dropdownInstance = bootstrap.Dropdown.getInstance(dropdown.querySelector('.dropdown-toggle'));
+            dropdownInstance.hide();
+          }
+        }
+      });
+    },
+    
     async handleLogout() {
-      await this.logout()
-      this.$router.push('/')
+      try {
+        await this.logout();
+        this.$router.push('/');
+        console.log('👋 Logout realizado com sucesso');
+      } catch (error) {
+        console.error('❌ Erro ao fazer logout:', error);
+      }
     }
+  },
+  
+  beforeUnmount() {
+    // Cleanup event listeners
+    document.removeEventListener('click', this.handleDocumentClick);
+    console.log('🧹 Header - cleanup realizado');
   }
 }
 </script>
