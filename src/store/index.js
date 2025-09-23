@@ -1,6 +1,220 @@
 import { createStore } from 'vuex'
 import axios from 'axios'
 
+// Serviço de pagamento mockado para ClickFarma
+class PaymentService {
+  
+  // Simula processamento de pagamento com cartão de crédito
+  static async processCardPayment(paymentData) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Simula validação do cartão
+        if (!this.validateCardNumber(paymentData.cardNumber)) {
+          reject({ 
+            error: 'INVALID_CARD', 
+            message: 'Número do cartão inválido' 
+          });
+          return;
+        }
+
+        if (!this.validateExpiryDate(paymentData.expiryDate)) {
+          reject({ 
+            error: 'EXPIRED_CARD', 
+            message: 'Cartão expirado' 
+          });
+          return;
+        }
+
+        if (!this.validateCVV(paymentData.cvv)) {
+          reject({ 
+            error: 'INVALID_CVV', 
+            message: 'CVV inválido' 
+          });
+          return;
+        }
+
+        // Simula 5% de chance de falha no pagamento
+        if (Math.random() < 0.05) {
+          reject({ 
+            error: 'PAYMENT_FAILED', 
+            message: 'Pagamento recusado pela operadora' 
+          });
+          return;
+        }
+
+        // Sucesso no pagamento
+        resolve({
+          success: true,
+          transactionId: this.generateTransactionId(),
+          amount: paymentData.amount,
+          method: 'credit_card',
+          status: 'approved',
+          timestamp: new Date().toISOString(),
+          authorizationCode: this.generateAuthCode()
+        });
+      }, 2000); // Simula delay de processamento
+    });
+  }
+
+  // Simula processamento de pagamento via PIX
+  static async processPixPayment(paymentData) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          transactionId: this.generateTransactionId(),
+          amount: paymentData.amount,
+          method: 'pix',
+          status: 'pending',
+          timestamp: new Date().toISOString(),
+          pixCode: this.generatePixCode(),
+          qrCode: this.generateQRCode(),
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
+        });
+      }, 1000);
+    });
+  }
+
+  // Simula processamento de pagamento via boleto
+  static async processBoletoPayment(paymentData) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          transactionId: this.generateTransactionId(),
+          amount: paymentData.amount,
+          method: 'boleto',
+          status: 'pending',
+          timestamp: new Date().toISOString(),
+          boletoCode: this.generateBoletoCode(),
+          dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 dias
+          boletoUrl: `https://boleto.clickfarma.com.br/${this.generateTransactionId()}.pdf`
+        });
+      }, 1500);
+    });
+  }
+
+  // Validações
+  static validateCardNumber(cardNumber) {
+    const cleaned = cardNumber.replace(/\s/g, '');
+    return /^\d{13,19}$/.test(cleaned) && this.luhnCheck(cleaned);
+  }
+
+  static validateExpiryDate(expiryDate) {
+    const [month, year] = expiryDate.split('/');
+    const expiry = new Date(2000 + parseInt(year), parseInt(month) - 1);
+    return expiry > new Date();
+  }
+
+  static validateCVV(cvv) {
+    return /^\d{3,4}$/.test(cvv);
+  }
+
+  // Algoritmo de Luhn para validação de cartão
+  static luhnCheck(cardNumber) {
+    let sum = 0;
+    let isEven = false;
+    
+    for (let i = cardNumber.length - 1; i >= 0; i--) {
+      let digit = parseInt(cardNumber[i]);
+      
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) {
+          digit -= 9;
+        }
+      }
+      
+      sum += digit;
+      isEven = !isEven;
+    }
+    
+    return sum % 10 === 0;
+  }
+
+  // Geradores de códigos
+  static generateTransactionId() {
+    return 'TXN' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
+  }
+
+  static generateAuthCode() {
+    return Math.random().toString(36).substr(2, 8).toUpperCase();
+  }
+
+  static generatePixCode() {
+    return '00020126580014BR.GOV.BCB.PIX0136' + 
+           Math.random().toString(36).substr(2, 32) + 
+           '5204000053039865802BR5925CLICKFARMA LTDA6009SAO PAULO62070503***6304';
+  }
+
+  static generateQRCode() {
+    // Em uma implementação real, isso geraria um QR code real
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  }
+
+  static generateBoletoCode() {
+    const bank = '341'; // Itaú
+    const dv = Math.floor(Math.random() * 10);
+    const sequence = Math.random().toString().substr(2, 10);
+    return `${bank}${dv}${sequence}`;
+  }
+
+  // Utilitários para formatação
+  static formatCardNumber(value) {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
+    }
+  }
+
+  static formatExpiryDate(value) {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
+  }
+
+  static getCardBrand(cardNumber) {
+    const number = cardNumber.replace(/\s/g, '');
+    
+    if (/^4/.test(number)) return 'visa';
+    if (/^5[1-5]/.test(number)) return 'mastercard';
+    if (/^3[47]/.test(number)) return 'amex';
+    if (/^6(?:011|5)/.test(number)) return 'discover';
+    if (/^(?:2131|1800|35\d{3})\d{11}$/.test(number)) return 'jcb';
+    
+    return 'unknown';
+  }
+
+  // Simula consulta de status de pagamento
+  static async getPaymentStatus(transactionId) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simula diferentes status baseado no ID
+        const statuses = ['pending', 'approved', 'failed', 'cancelled'];
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        
+        resolve({
+          transactionId,
+          status: randomStatus,
+          updatedAt: new Date().toISOString()
+        });
+      }, 500);
+    });
+  }
+}
+
 export default createStore({
   state: {
     user: null,
@@ -8,23 +222,8 @@ export default createStore({
     cart: [],
     categories: ['Medicamentos', 'Cosméticos', 'Higiene', 'Vitaminas', 'Maternidade'],
     authToken: localStorage.getItem('authToken') || null,
-    addresses: [],
-    selectedProduct: null,
-
-    // Checkout centralizado
-    checkout: {
-      deliveryOption: null,
-      selectedAddress: null,
-      selectedStore: null,
-      paymentMethod: null,
-      deliveryPrice: 0
-    },
-
-    // Pedidos do usuário
-    orders: [],
-
-    // Prescrições médicas
-    prescriptions: []
+    lastOrder: null,
+    paymentMethod: null
   },
   
   getters: {
@@ -32,19 +231,7 @@ export default createStore({
     cartItemsCount: state => state.cart.reduce((total, item) => total + item.quantity, 0),
     cartTotal: state => state.cart.reduce((total, item) => total + (item.price * item.quantity), 0),
     products: state => state.products,
-    categories: state => state.categories,
-    user: state => state.user,
-    addresses: state => state.addresses,
-    defaultAddress: state => state.addresses.find(addr => addr.isDefault) || null,
-    selectedProduct: state => state.selectedProduct,
-    checkout: state => state.checkout,
-    orders: state => state.orders,
-    prescriptions: state => state.prescriptions,
-
-    // Buscar pedido por ID
-    getOrderById: (state) => (orderId) => {
-      return state.orders.find(order => order.id === orderId)
-    }
+    categories: state => state.categories
   },
   
   mutations: {
@@ -83,85 +270,22 @@ export default createStore({
     CLEAR_CART(state) {
       state.cart = []
     },
-    UPDATE_USER_PROFILE(state, userData) {
-      if (state.user) {
-        state.user = { ...state.user, ...userData }
-      }
+    SET_ORDER(state, order) {
+      state.lastOrder = order;
     },
-    SET_ADDRESSES(state, addresses) {
-      state.addresses = addresses
-    },
-    ADD_ADDRESS(state, address) {
-      state.addresses.push(address)
-    },
-    UPDATE_ADDRESS(state, updatedAddress) {
-      const index = state.addresses.findIndex(a => a.id === updatedAddress.id)
-      if (index !== -1) {
-        state.addresses.splice(index, 1, updatedAddress)
-      }
-    },
-    DELETE_ADDRESS(state, addressId) {
-      state.addresses = state.addresses.filter(a => a.id !== addressId)
-    },
-    SET_DEFAULT_ADDRESS(state, addressId) {
-      state.addresses = state.addresses.map(address => ({
-        ...address,
-        isDefault: address.id === addressId
-      }))
-    },
-    SET_SELECTED_PRODUCT(state, product) {
-      state.selectedProduct = product
-    },
-
-    // Mutations do checkout
-    SET_CHECKOUT_INFO(state, checkoutInfo) {
-      state.checkout = { ...state.checkout, ...checkoutInfo }
-    },
-    ADD_ORDER(state, order) {
-      state.orders.push(order)
-    },
-    CLEAR_CHECKOUT(state) {
-      state.checkout = {
-        deliveryOption: null,
-        selectedAddress: null,
-        selectedStore: null,
-        paymentMethod: null,
-        deliveryPrice: 0
-      }
-    },
-
-    // Mutations de prescrições
-    SET_PRESCRIPTIONS(state, prescriptions) {
-      state.prescriptions = prescriptions
-    },
-    ADD_PRESCRIPTION(state, prescription) {
-      state.prescriptions.push(prescription)
-    },
-    UPDATE_PRESCRIPTION(state, updatedPrescription) {
-      const index = state.prescriptions.findIndex(p => p.id === updatedPrescription.id)
-      if (index !== -1) {
-        state.prescriptions.splice(index, 1, updatedPrescription)
-      }
-    },
-    DELETE_PRESCRIPTION(state, prescriptionId) {
-      state.prescriptions = state.prescriptions.filter(p => p.id !== prescriptionId)
+    SET_PAYMENT_METHOD(state, method) {
+      state.paymentMethod = method;
     }
   },
   
   actions: {
     async login({ commit }, credentials) {
       try {
+        // Simulação de API
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
-              user: { 
-                id: 1, 
-                name: credentials.email, 
-                email: credentials.email,
-                phone: '(81) 99999-9999',
-                birthdate: '1990-01-01',
-                cpf: '123.456.789-00'
-              },
+              user: { id: 1, name: credentials.email, email: credentials.email },
               token: 'mock-token-' + Math.random().toString(36).substr(2)
             }
           })
@@ -177,17 +301,11 @@ export default createStore({
     
     async register({ commit }, userData) {
       try {
+        // Simulação de API
         const response = await new Promise(resolve => setTimeout(() => {
           resolve({ 
             data: { 
-              user: { 
-                id: 2, 
-                name: userData.name, 
-                email: userData.email,
-                phone: '',
-                birthdate: '',
-                cpf: ''
-              },
+              user: { id: 2, name: userData.name, email: userData.email },
               token: 'mock-token-' + Math.random().toString(36).substr(2)
             }
           })
@@ -207,6 +325,7 @@ export default createStore({
     
     async fetchProducts({ commit }) {
       try {
+        // Dados mockados
         const mockProducts = [
           { id: 1, name: 'Paracetamol 500mg', price: 12.90, category: 'Medicamentos', description: 'Analgésico e antitérmico', inStock: true },
           { id: 2, name: 'Dipirona 500mg', price: 8.50, category: 'Medicamentos', description: 'Analgésico e antitérmico', inStock: true },
@@ -220,12 +339,6 @@ export default createStore({
       } catch (error) {
         console.error('Erro ao buscar produtos:', error)
       }
-    },
-
-    async fetchProductById({ commit, state }, productId) {
-      const product = state.products.find(p => p.id === productId)
-      commit('SET_SELECTED_PRODUCT', product)
-      return product
     },
     
     addToCart({ commit }, product) {
@@ -244,261 +357,79 @@ export default createStore({
       commit('CLEAR_CART')
     },
     
-    async updateUserProfile({ commit, state }, userData) {
+    async processPayment({ commit, state }, paymentData) {
       try {
-        // Simulação de API
-        const updatedUser = {
-          ...state.user,
-          ...userData
+        let paymentResult;
+        const amount = state.cartTotal + (paymentData.deliveryType === 'delivery' ? 10 : 0);
+        
+        // Processa o pagamento de acordo com o método selecionado
+        switch (paymentData.paymentMethod) {
+          case 'credit_card':
+            paymentResult = await PaymentService.processCardPayment({
+              ...paymentData,
+              amount: amount
+            });
+            break;
+            
+          case 'pix':
+            paymentResult = await PaymentService.processPixPayment({
+              amount: amount
+            });
+            break;
+            
+          case 'boleto':
+            paymentResult = await PaymentService.processBoletoPayment({
+              amount: amount
+            });
+            break;
+            
+          default:
+            throw new Error('Método de pagamento não suportado');
         }
         
-        commit('SET_USER', updatedUser)
-        return { message: 'Perfil atualizado com sucesso!' }
-      } catch (error) {
-        throw error.response?.data || { message: 'Erro ao atualizar perfil' }
-      }
-    },
-
-    
-    async changeUserPassword({ commit }, passwordData) {
-      try {
-        // Simulação de API com timeout
-        await new Promise((resolve, reject) => {
-          setTimeout(() => {
-            // Simular validação de senha (para teste)
-            if (passwordData.currentPassword === 'senhaerrada') {
-              reject({ message: 'Senha atual incorreta' })
-            } else if (passwordData.newPassword.length < 6) {
-              reject({ message: 'Nova senha deve ter pelo menos 6 caracteres' })
-            } else {
-              resolve({ message: 'Senha alterada com sucesso!' })
-            }
-          }, 1000)
-        })
-        
-        return { message: 'Senha alterada com sucesso!' }
-      } catch (error) {
-        // CORREÇÃO: Lançar erro de forma consistente
-        const errorObj = new Error(error.message || 'Erro ao alterar senha')
-        errorObj.originalError = error
-        throw errorObj
-      }
-    },
-    
-    async fetchAddresses({ commit }) {
-      try {
-        const mockAddresses = [
-          {
-            id: 1,
-            nickname: 'Casa',
-            zipcode: '50720-001',
-            street: 'Rua Professor José Brandão',
-            number: '123',
-            neighborhood: 'Cidade Universitária',
-            complement: 'Apartmento 101',
-            city: 'Recife',
-            state: 'PE',
-            isDefault: true
-          },
-          {
-            id: 2,
-            nickname: 'Trabalho',
-            zipcode: '50030-230',
-            street: 'Av. Conde da Boa Vista',
-            number: '456',
-            neighborhood: 'Boa Vista',
-            complement: 'Sala 302',
-            city: 'Recife',
-            state: 'PE',
-            isDefault: false
-          }
-        ]
-        
-        commit('SET_ADDRESSES', mockAddresses)
-      } catch (error) {
-        throw error
-      }
-    },
-
-    async addAddress({ commit }, addressData) {
-      try {
-        const newAddress = {
-          id: Date.now(),
-          ...addressData
+        if (paymentResult.success) {
+          // Criar objeto de pedido
+          const order = {
+            id: 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+            transactionId: paymentResult.transactionId,
+            items: [...state.cart],
+            total: amount,
+            status: paymentResult.status,
+            date: new Date().toISOString(),
+            paymentMethod: paymentData.paymentMethod,
+            deliveryType: paymentData.deliveryType,
+            deliveryInfo: paymentData.deliveryInfo,
+            paymentDetails: paymentResult
+          };
+          
+          commit('SET_ORDER', order);
+          commit('CLEAR_CART');
         }
         
-        commit('ADD_ADDRESS', newAddress)
-        return newAddress
+        return paymentResult;
       } catch (error) {
-        throw error
-      }
-    },
-
-    async updateAddress({ commit }, addressData) {
-      try {
-        commit('UPDATE_ADDRESS', addressData)
-        return addressData
-      } catch (error) {
-        throw error
-      }
-    },
-
-    async deleteAddress({ commit }, addressId) {
-      try {
-        commit('DELETE_ADDRESS', addressId)
-      } catch (error) {
-        throw error
-      }
-    },
-
-    async setDefaultAddress({ commit }, addressId) {
-      try {
-        commit('SET_DEFAULT_ADDRESS', addressId)
-      } catch (error) {
-        throw error
-      }
-    },
-
-    // Checkout Actions
-    setCheckoutInfo({ commit }, checkoutInfo) {
-      commit('SET_CHECKOUT_INFO', checkoutInfo)
-    },
-    async createOrder({ commit }, orderData) {
-      try {
-        const subtotal = orderData.items.reduce((total, item) => total + (item.price * item.quantity), 0)
-        const discount = orderData.payment.method === 'pix' ? subtotal * 0.05 : 0
-
-        const order = {
-          id: Math.random().toString(36).substr(2, 9).toUpperCase(),
-          date: new Date().toISOString(),
-          items: orderData.items,
-          delivery: orderData.delivery,
-          payment: orderData.payment,
-          subtotal,
-          discount,
-          total: orderData.total,
-          status: 'confirmed'
-        }
-        
-        commit('ADD_ORDER', order)
-        commit('CLEAR_CART')
-        commit('CLEAR_CHECKOUT')
-        
-        return order
-      } catch (error) {
-        throw error
+        throw error.response ? error.response.data : { message: error.message || 'Erro ao processar pagamento' };
       }
     },
 
     async requestPasswordReset({ commit }, email) {
       try {
-        const response = await new Promise(resolve => setTimeout(() => {
-          resolve({ data: { message: 'Email de redefinição enviado com sucesso!' } })
-        }, 1000))
-        
-        return response.data
+        // Simulação de API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { success: true }
       } catch (error) {
-        throw error.response ? error.response.data : { message: 'Erro ao solicitar redefinição de senha' }
+        throw new Error('Erro ao solicitar redefinição de senha')
       }
     },
-
-    async resetPassword({ commit }, resetData) {
+    
+    async updateUserProfile({ commit }, userData) {
       try {
-        const response = await new Promise(resolve => setTimeout(() => {
-          resolve({ data: { message: 'Senha redefinida com sucesso!' } })
-        }, 1000))
-        
-        return response.data
+        // Simulação de atualização
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        commit('SET_USER', userData)
+        return { success: true }
       } catch (error) {
-        throw error.response ? error.response.data : { message: 'Erro ao redefinir senha' }
-      }
-    },
-
-    // Prescriptions Actions
-    async fetchPrescriptions({ commit }) {
-      try {
-        const mockPrescriptions = [
-          {
-            id: 1,
-            doctorName: 'Dr. Carlos Silva',
-            doctorCrm: 'CRM/PE 12345',
-            prescriptionDate: '2024-01-15',
-            expiryDate: '2024-02-15',
-            medications: 'Paracetamol 500mg - 2x ao dia\nDipirona 500mg - 1x ao dia',
-            notes: 'Tomar após as refeições',
-            status: 'approved',
-            fileUrl: null,
-            createdAt: '2024-01-15T10:30:00'
-          },
-          {
-            id: 2,
-            doctorName: 'Dra. Maria Santos',
-            doctorCrm: 'CRM/PE 67890',
-            prescriptionDate: '2024-01-20',
-            expiryDate: '2024-02-20',
-            medications: 'Omeprazol 20mg - 1x ao dia\nAmoxicilina 500mg - 3x ao dia',
-            notes: 'Completar o tratamento',
-            status: 'pending',
-            fileUrl: null,
-            createdAt: '2024-01-20T14:45:00'
-          }
-        ]
-        
-        commit('SET_PRESCRIPTIONS', mockPrescriptions)
-      } catch (error) {
-        throw error
-      }
-    },
-
-    async uploadPrescription({ commit }, formData) {
-      try {
-        const newPrescription = {
-          id: Date.now(),
-          doctorName: formData.get('doctorName'),
-          doctorCrm: formData.get('doctorCrm'),
-          prescriptionDate: formData.get('prescriptionDate'),
-          expiryDate: formData.get('expiryDate'),
-          medications: formData.get('medications'),
-          notes: formData.get('notes'),
-          status: 'pending',
-          fileUrl: null,
-          createdAt: new Date().toISOString()
-        }
-        
-        commit('ADD_PRESCRIPTION', newPrescription)
-        return newPrescription
-      } catch (error) {
-        throw error
-      }
-    },
-
-    async updatePrescription({ commit }, formData) {
-      try {
-        const updatedPrescription = {
-          id: formData.get('id'),
-          doctorName: formData.get('doctorName'),
-          doctorCrm: formData.get('doctorCrm'),
-          prescriptionDate: formData.get('prescriptionDate'),
-          expiryDate: formData.get('expiryDate'),
-          medications: formData.get('medications'),
-          notes: formData.get('notes'),
-          status: 'pending',
-          fileUrl: null,
-          createdAt: new Date().toISOString()
-        }
-        
-        commit('UPDATE_PRESCRIPTION', updatedPrescription)
-        return updatedPrescription
-      } catch (error) {
-        throw error
-      }
-    },
-
-    async deletePrescription({ commit }, prescriptionId) {
-      try {
-        commit('DELETE_PRESCRIPTION', prescriptionId)
-      } catch (error) {
-        throw error
+        throw new Error('Erro ao atualizar perfil')
       }
     }
   }

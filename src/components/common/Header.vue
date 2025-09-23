@@ -42,9 +42,10 @@
             </button>
             <ul class="dropdown-menu">
               <li><router-link to="/profile" class="dropdown-item">Meu Perfil</router-link></li>
+              <li><router-link to="/prescriptions" class="dropdown-item">Minhas Receitas</router-link></li>
               <li><a class="dropdown-item" href="#">Meus Pedidos</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item" @click="logout">Sair</button></li>
+              <li><button class="dropdown-item" @click="handleLogout">Sair</button></li>
             </ul>
           </div>
         </div>

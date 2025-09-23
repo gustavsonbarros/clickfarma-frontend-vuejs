@@ -1,43 +1,98 @@
 <template>
   <div class="container mt-4">
+    <h2>📄 Minhas Receitas</h2>
+    
     <div class="row">
-      <div class="col-md-3">
-        <profile-sidebar />
-      </div>
-      
-      <div class="col-md-9">
-        <div class="card">
-          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="fas fa-file-medical me-2"></i>Minhas Receitas
-            </h5>
-            <button class="btn btn-light btn-sm" @click="showUploadForm">
-              <i class="fas fa-upload me-1"></i>Nova Receita
-            </button>
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>📤 Enviar Nova Receita</h5>
           </div>
           <div class="card-body">
-            <!-- Formulário de Upload -->
-            <upload-prescription 
-              v-if="showUpload"
-              @upload-complete="handleUploadComplete"
-              @cancel="hideUploadForm"
-            />
-            
-            <!-- Listagem de Receitas -->
+            <form @submit.prevent="uploadPrescription">
+              <div class="mb-3">
+                <label class="form-label">Arquivo da Receita</label>
+                <input 
+                  @change="handleFileSelect" 
+                  type="file" 
+                  class="form-control" 
+                  accept="image/*,.pdf"
+                  required
+                >
+                <div class="form-text">Formatos aceitos: JPG, PNG, PDF (máx. 5MB)</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Observações (opcional)</label>
+                <textarea 
+                  v-model="uploadForm.notes" 
+                  class="form-control" 
+                  rows="3"
+                  placeholder="Adicione observações sobre a receita..."
+                ></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" :disabled="!selectedFile">
+                Enviar Receita
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h5>📋 Histórico de Receitas</h5>
+          </div>
+          <div class="card-body">
+            <div v-if="prescriptions.length === 0" class="text-center py-4">
+              <p class="text-muted">Nenhuma receita enviada ainda.</p>
+            </div>
             <div v-else>
-              <div v-if="loading" class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Carregando...</span>
+              <div v-for="prescription in prescriptions" :key="prescription.id" class="border-bottom pb-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6>{{ prescription.fileName }}</h6>
+                    <p class="text-muted small mb-1">
+                      Enviado em: {{ formatDate(prescription.uploadDate) }}
+                    </p>
+                    <p v-if="prescription.notes" class="small mb-2">
+                      <strong>Observações:</strong> {{ prescription.notes }}
+                    </p>
+                    <span :class="getStatusClass(prescription.status)" class="badge">
+                      {{ getStatusText(prescription.status) }}
+                    </span>
+                  </div>
+                  <div>
+                    <button @click="viewPrescription(prescription)" class="btn btn-sm btn-outline-primary">
+                      Ver Detalhes
+                    </button>
+                  </div>
                 </div>
               </div>
-              
-              <prescription-list 
-                v-else
-                :prescriptions="prescriptions"
-                @edit-prescription="editPrescription"
-                @delete-prescription="deletePrescription"
-              />
             </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h5>ℹ️ Informações</h5>
+          </div>
+          <div class="card-body">
+            <h6>Como funciona?</h6>
+            <ol class="small">
+              <li>Envie a foto ou PDF da sua receita</li>
+              <li>Nossa equipe irá validar a receita</li>
+              <li>Você será notificado sobre o status</li>
+              <li>Após aprovada, os medicamentos estarão disponíveis para compra</li>
+            </ol>
+            
+            <h6 class="mt-3">Status das Receitas:</h6>
+            <ul class="small">
+              <li><span class="badge bg-warning">Pendente</span> - Aguardando análise</li>
+              <li><span class="badge bg-primary">Em Análise</span> - Sendo validada</li>
+              <li><span class="badge bg-success">Aprovada</span> - Receita válida</li>
+              <li><span class="badge bg-danger">Rejeitada</span> - Receita inválida</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -46,89 +101,89 @@
 </template>
 
 <script>
-import { mapActions, mapState } from 'vuex'
-import ProfileSidebar from '@/components/auth/ProfileSidebar.vue'
-import UploadPrescription from '@/components/prescriptions/UploadPrescription.vue'
-import PrescriptionList from '@/components/prescriptions/PrescriptionList.vue'
-
 export default {
   name: 'Prescriptions',
-  components: {
-    ProfileSidebar,
-    UploadPrescription,
-    PrescriptionList
-  },
   data() {
     return {
-      showUpload: false,
-      loading: false,
-      editingPrescription: null
+      selectedFile: null,
+      uploadForm: {
+        notes: ''
+      },
+      prescriptions: [
+        {
+          id: 1,
+          fileName: 'receita_antibiotico.jpg',
+          uploadDate: new Date('2024-01-15'),
+          status: 'approved',
+          notes: 'Receita para tratamento de infecção'
+        },
+        {
+          id: 2,
+          fileName: 'receita_vitaminas.pdf',
+          uploadDate: new Date('2024-01-10'),
+          status: 'pending',
+          notes: ''
+        }
+      ]
     }
-  },
-  computed: {
-    ...mapState(['prescriptions'])
   },
   methods: {
-    ...mapActions(['fetchPrescriptions', 'deletePrescription']),
+    handleFileSelect(event) {
+      this.selectedFile = event.target.files[0];
+    },
     
-    async loadPrescriptions() {
-      this.loading = true
-      try {
-        await this.fetchPrescriptions()
-      } catch (error) {
-        console.error('Erro ao carregar receitas:', error)
-        this.$toast.error('Erro ao carregar receitas')
-      } finally {
-        this.loading = false
+    uploadPrescription() {
+      if (!this.selectedFile) {
+        alert('Por favor, selecione um arquivo.');
+        return;
       }
+      
+      // Simular upload
+      const newPrescription = {
+        id: Date.now(),
+        fileName: this.selectedFile.name,
+        uploadDate: new Date(),
+        status: 'pending',
+        notes: this.uploadForm.notes
+      };
+      
+      this.prescriptions.unshift(newPrescription);
+      
+      // Reset form
+      this.selectedFile = null;
+      this.uploadForm.notes = '';
+      document.querySelector('input[type="file"]').value = '';
+      
+      alert('Receita enviada com sucesso! Você será notificado sobre o status da análise.');
     },
     
-    showUploadForm() {
-      this.showUpload = true
-      this.editingPrescription = null
+    viewPrescription(prescription) {
+      alert(`Detalhes da Receita:\n\nArquivo: ${prescription.fileName}\nStatus: ${this.getStatusText(prescription.status)}\nData: ${this.formatDate(prescription.uploadDate)}\nObservações: ${prescription.notes || 'Nenhuma'}`);
     },
     
-    hideUploadForm() {
-      this.showUpload = false
+    formatDate(date) {
+      return date.toLocaleDateString('pt-BR');
     },
     
-    handleUploadComplete() {
-      this.hideUploadForm()
-      this.loadPrescriptions()
-      this.$toast.success('Receita enviada com sucesso!')
+    getStatusText(status) {
+      const statusMap = {
+        'pending': 'Pendente',
+        'analyzing': 'Em Análise',
+        'approved': 'Aprovada',
+        'rejected': 'Rejeitada'
+      };
+      return statusMap[status] || status;
     },
     
-    editPrescription(prescription) {
-      this.editingPrescription = prescription
-      this.showUpload = true
-    },
-    
-    async deletePrescriptionHandler(prescriptionId) {
-      if (confirm('Tem certeza que deseja excluir esta receita?')) {
-        try {
-          await this.deletePrescription(prescriptionId)
-          this.$toast.success('Receita excluída com sucesso!')
-          this.loadPrescriptions()
-        } catch (error) {
-          this.$toast.error('Erro ao excluir receita')
-        }
-      }
+    getStatusClass(status) {
+      const classMap = {
+        'pending': 'bg-warning',
+        'analyzing': 'bg-primary',
+        'approved': 'bg-success',
+        'rejected': 'bg-danger'
+      };
+      return classMap[status] || 'bg-secondary';
     }
-  },
-  mounted() {
-    this.loadPrescriptions()
   }
 }
 </script>
-
-<style scoped>
-.card {
-  border: none;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  border-radius: 10px 10px 0 0 !important;
-}
-</style>

@@ -1,34 +1,90 @@
 <template>
   <div class="container mt-4">
+    <h2>📍 Meus Endereços</h2>
+    
     <div class="row">
-      <div class="col-md-3">
-        <profile-sidebar />
+      <div class="col-md-8">
+        <div v-for="address in addresses" :key="address.id" class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="card-title">{{ address.label }}</h6>
+                <p class="card-text">
+                  {{ address.street }}, {{ address.number }}<br>
+                  {{ address.city }} - {{ address.state }}<br>
+                  CEP: {{ address.zip }}
+                </p>
+                <span v-if="address.isDefault" class="badge bg-primary">Endereço Principal</span>
+              </div>
+              <div>
+                <button @click="editAddress(address)" class="btn btn-sm btn-outline-primary me-2">
+                  Editar
+                </button>
+                <button @click="deleteAddress(address.id)" class="btn btn-sm btn-outline-danger">
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="addresses.length === 0" class="text-center py-5">
+          <p class="text-muted">Nenhum endereço cadastrado.</p>
+        </div>
       </div>
       
-      <div class="col-md-9">
+      <div class="col-md-4">
         <div class="card">
-          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="fas fa-map-marker-alt me-2"></i>Meus Endereços
-            </h5>
-            <button class="btn btn-light btn-sm" @click="showAddressForm(null)">
-              <i class="fas fa-plus me-1"></i>Novo Endereço
-            </button>
+          <div class="card-header">
+            <h5>{{ editingAddress ? 'Editar Endereço' : 'Novo Endereço' }}</h5>
           </div>
           <div class="card-body">
-            <address-list 
-              :addresses="addresses" 
-              @edit-address="showAddressForm"
-              @delete-address="deleteAddress"
-              @set-default="setDefaultAddress"
-            />
-            
-            <address-form 
-              v-if="showForm"
-              :address="editingAddress"
-              @save-address="saveAddress"
-              @cancel="hideAddressForm"
-            />
+            <form @submit.prevent="saveAddress">
+              <div class="mb-3">
+                <label class="form-label">Rótulo</label>
+                <input v-model="addressForm.label" type="text" class="form-control" placeholder="Ex: Casa, Trabalho" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Rua</label>
+                <input v-model="addressForm.street" type="text" class="form-control" required>
+              </div>
+              <div class="row">
+                <div class="col-md-8 mb-3">
+                  <label class="form-label">Número</label>
+                  <input v-model="addressForm.number" type="text" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Complemento</label>
+                  <input v-model="addressForm.complement" type="text" class="form-control">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-8 mb-3">
+                  <label class="form-label">Cidade</label>
+                  <input v-model="addressForm.city" type="text" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Estado</label>
+                  <input v-model="addressForm.state" type="text" class="form-control" required>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">CEP</label>
+                <input v-model="addressForm.zip" type="text" class="form-control" required>
+              </div>
+              <div class="mb-3 form-check">
+                <input v-model="addressForm.isDefault" type="checkbox" class="form-check-input" id="defaultAddress">
+                <label class="form-check-label" for="defaultAddress">
+                  Definir como endereço principal
+                </label>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">
+                {{ editingAddress ? 'Atualizar' : 'Adicionar' }} Endereço
+              </button>
+              <button v-if="editingAddress" @click="cancelEdit" type="button" class="btn btn-secondary w-100 mt-2">
+                Cancelar
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -37,78 +93,96 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
-import ProfileSidebar from '@/components/auth/ProfileSidebar.vue'
-import AddressList from '@/components/auth/AddressList.vue'
-import AddressForm from '@/components/auth/AddressForm.vue'
-
 export default {
   name: 'Addresses',
-  components: {
-    ProfileSidebar,
-    AddressList,
-    AddressForm
-  },
   data() {
     return {
-      showForm: false,
+      addresses: [
+        {
+          id: 1,
+          label: 'Casa',
+          street: 'Rua das Flores',
+          number: '123',
+          complement: 'Apto 45',
+          city: 'São Paulo',
+          state: 'SP',
+          zip: '01234-567',
+          isDefault: true
+        }
+      ],
+      addressForm: {
+        label: '',
+        street: '',
+        number: '',
+        complement: '',
+        city: '',
+        state: '',
+        zip: '',
+        isDefault: false
+      },
       editingAddress: null
     }
   },
-  computed: {
-    ...mapState(['addresses'])
-  },
-  mounted() {
-    this.loadAddresses()
-  },
   methods: {
-    ...mapActions(['fetchAddresses', 'addAddress', 'updateAddress', 'deleteAddress', 'setDefaultAddress']),
-    
-    async loadAddresses() {
-      try {
-        await this.fetchAddresses()
-      } catch (error) {
-        console.error('Erro ao carregar endereços:', error)
-        this.$toast.error('Erro ao carregar endereços')
-      }
-    },
-    
-    showAddressForm(address) {
-      this.editingAddress = address ? { ...address } : null
-      this.showForm = true
-    },
-    
-    hideAddressForm() {
-      this.showForm = false
-      this.editingAddress = null
-    },
-    
-    async saveAddress(addressData) {
-      try {
-        if (addressData.id) {
-          await this.updateAddress(addressData)
-          this.$toast.success('Endereço atualizado com sucesso!')
-        } else {
-          await this.addAddress(addressData)
-          this.$toast.success('Endereço adicionado com sucesso!')
+    saveAddress() {
+      if (this.editingAddress) {
+        // Atualizar endereço existente
+        const index = this.addresses.findIndex(addr => addr.id === this.editingAddress.id);
+        if (index !== -1) {
+          this.addresses[index] = { ...this.addressForm, id: this.editingAddress.id };
         }
-        this.hideAddressForm()
-      } catch (error) {
-        this.$toast.error(error.message || 'Erro ao salvar endereço')
+        this.editingAddress = null;
+      } else {
+        // Adicionar novo endereço
+        const newAddress = {
+          ...this.addressForm,
+          id: Date.now()
+        };
+        this.addresses.push(newAddress);
       }
+      
+      // Se este endereço foi marcado como principal, desmarcar os outros
+      if (this.addressForm.isDefault) {
+        this.addresses.forEach(addr => {
+          if (addr.id !== (this.editingAddress?.id || newAddress.id)) {
+            addr.isDefault = false;
+          }
+        });
+      }
+      
+      this.resetForm();
+      alert('Endereço salvo com sucesso!');
+    },
+    
+    editAddress(address) {
+      this.editingAddress = address;
+      this.addressForm = { ...address };
+    },
+    
+    deleteAddress(addressId) {
+      if (confirm('Tem certeza que deseja excluir este endereço?')) {
+        this.addresses = this.addresses.filter(addr => addr.id !== addressId);
+        alert('Endereço excluído com sucesso!');
+      }
+    },
+    
+    cancelEdit() {
+      this.editingAddress = null;
+      this.resetForm();
+    },
+    
+    resetForm() {
+      this.addressForm = {
+        label: '',
+        street: '',
+        number: '',
+        complement: '',
+        city: '',
+        state: '',
+        zip: '',
+        isDefault: false
+      };
     }
   }
 }
 </script>
-
-<style scoped>
-.card {
-  border: none;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  border-radius: 10px 10px 0 0 !important;
-}
-</style>

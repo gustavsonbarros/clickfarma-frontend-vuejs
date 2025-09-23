@@ -1,125 +1,90 @@
 <template>
   <div class="container mt-4">
+    <h2>💰 Finalizar Compra</h2>
     <div class="row">
-      <div class="col-lg-8">
-        <!-- Etapas do Checkout -->
-        <checkout-steps :current-step="currentStep" />
-
-        <!-- Etapa 1: Entrega/Retirada -->
-        <div v-if="currentStep === 1" class="checkout-section">
-          <div class="card">
-            <div class="card-header bg-primary text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-truck me-2"></i>Opções de Entrega
-              </h5>
-            </div>
-            <div class="card-body">
-              <delivery-options
-                :addresses="addresses"
-                :selected-delivery-option="deliveryOption"
-                :selected-address="selectedAddress"
-                :selected-store="selectedStore"
-                @update:delivery-option="updateDeliveryOption"
-                @update:selected-address="updateSelectedAddress"
-                @update:selected-store="updateSelectedStore"
-              />
-            </div>
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h5>Informações de Entrega</h5>
           </div>
-        </div>
-
-        <!-- Etapa 2: Pagamento -->
-        <div v-if="currentStep === 2" class="checkout-section">
-          <div class="card">
-            <div class="card-header bg-primary text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-credit-card me-2"></i>Pagamento
-              </h5>
+          <div class="card-body">
+            <div class="mb-4">
+              <h6>Tipo de Entrega</h6>
+              <div class="form-check">
+                <input v-model="deliveryType" class="form-check-input" type="radio" value="delivery" id="delivery">
+                <label class="form-check-label" for="delivery">
+                  🚚 Entrega em domicílio (R$ 10,00)
+                </label>
+              </div>
+              <div class="form-check">
+                <input v-model="deliveryType" class="form-check-input" type="radio" value="pickup" id="pickup">
+                <label class="form-check-label" for="pickup">
+                  🏪 Retirada na loja (Grátis)
+                </label>
+              </div>
             </div>
-            <div class="card-body">
-              <payment-methods
-                :selected-method="selectedPaymentMethod"
-                @update:payment-method="updatePaymentMethod"
-              />
+            
+            <form v-if="deliveryType === 'delivery'" @submit.prevent="confirmOrder">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Nome completo</label>
+                  <input v-model="deliveryInfo.name" type="text" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">CPF</label>
+                  <input v-model="deliveryInfo.cpf" type="text" class="form-control" required>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Endereço</label>
+                <input v-model="deliveryInfo.address" type="text" class="form-control" required>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Cidade</label>
+                  <input v-model="deliveryInfo.city" type="text" class="form-control" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Estado</label>
+                  <input v-model="deliveryInfo.state" type="text" class="form-control" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">CEP</label>
+                  <input v-model="deliveryInfo.zip" type="text" class="form-control" required>
+                </div>
+              </div>
+            </form>
+            
+            <div v-if="deliveryType === 'pickup'" class="alert alert-info">
+              <h6>📍 Endereço da Loja:</h6>
+              <p class="mb-0">
+                Rua das Farmácias, 123 - Centro<br>
+                São Paulo - SP, CEP: 01234-567<br>
+                <strong>Horário:</strong> Segunda a Sexta: 8h às 18h | Sábado: 8h às 12h
+              </p>
             </div>
-          </div>
-        </div>
-
-        <!-- Etapa 3: Revisão -->
-        <div v-if="currentStep === 3" class="checkout-section">
-          <div class="card">
-            <div class="card-header bg-primary text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-check-circle me-2"></i>Revisar Pedido
-              </h5>
+            
+            <div v-if="deliveryType" class="mt-3">
+              <button @click="confirmOrder" class="btn btn-success">
+                {{ deliveryType === 'delivery' ? 'Confirmar Entrega' : 'Confirmar Retirada' }}
+              </button>
             </div>
-            <div class="card-body">
-              <checkout-summary
-                :cart="cart"
-                :delivery-option="deliveryOption"
-                :selected-address="selectedAddress"
-                :selected-store="selectedStore"
-                :selected-payment-method="selectedPaymentMethod"
-                :delivery-price="deliveryPrice"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Etapa 4: Confirmação -->
-        <div v-if="currentStep === 4" class="checkout-section">
-          <order-confirmation
-            :order="order"
-            @continue-shopping="continueShopping"
-          />
-        </div>
-
-        <!-- Navegação -->
-        <div class="checkout-navigation mt-4">
-          <div class="d-flex justify-content-between">
-            <button 
-              v-if="currentStep > 1 && currentStep < 4"
-              class="btn btn-outline-secondary"
-              @click="previousStep"
-            >
-              <i class="fas fa-arrow-left me-2"></i>Voltar
-            </button>
-            <div v-else></div>
-
-            <button 
-              v-if="currentStep < 3"
-              class="btn btn-primary"
-              :disabled="!canContinue"
-              @click="nextStep"
-            >
-              Continuar
-              <i class="fas fa-arrow-right ms-2"></i>
-            </button>
-
-            <button 
-              v-if="currentStep === 3"
-              class="btn btn-success"
-              :disabled="processingOrder"
-              @click="placeOrder"
-            >
-              <span v-if="processingOrder" class="spinner-border spinner-border-sm me-2"></span>
-              {{ processingOrder ? 'Processando...' : 'Finalizar Pedido' }}
-            </button>
           </div>
         </div>
       </div>
-
-      <div class="col-lg-4">
-        <!-- Resumo do Pedido -->
-        <div class="sticky-top" style="top: 20px;">
-          <checkout-summary
-            :cart="cart"
-            :delivery-option="deliveryOption"
-            :selected-address="selectedAddress"
-            :selected-store="selectedStore"
-            :selected-payment-method="selectedPaymentMethod"
-            :delivery-price="deliveryPrice"
-            :current-step="currentStep"
-          />
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h5>Resumo</h5>
+          </div>
+          <div class="card-body">
+            <p>Itens: {{ cartItemsCount }}</p>
+            <p>Subtotal: R$ {{ cartTotal.toFixed(2) }}</p>
+            <p v-if="deliveryType === 'delivery'">Entrega: R$ 10.00</p>
+            <p v-else-if="deliveryType === 'pickup'">Retirada: R$ 0.00</p>
+            <hr>
+            <h5>Total: R$ {{ finalTotal.toFixed(2) }}</h5>
+          </div>
         </div>
       </div>
     </div>
@@ -127,196 +92,48 @@
 </template>
 
 <script>
-import { mapGetters, mapActions, mapState } from 'vuex'
-import CheckoutSteps from '@/components/checkout/CheckoutSteps.vue'
-import DeliveryOptions from '@/components/checkout/DeliveryOptions.vue'
-import PaymentMethods from '@/components/checkout/PaymentMethods.vue'
-import CheckoutSummary from '@/components/checkout/CheckoutSummary.vue'
-import OrderConfirmation from '@/components/checkout/OrderConfirmation.vue'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'Checkout',
-  components: {
-    CheckoutSteps,
-    DeliveryOptions,
-    PaymentMethods,
-    CheckoutSummary,
-    OrderConfirmation
-  },
   data() {
     return {
-      currentStep: 1,
-      deliveryOption: '',
-      selectedAddress: null,
-      selectedStore: null,
-      selectedPaymentMethod: '',
-      processingOrder: false,
-      order: null
+      deliveryType: 'delivery',
+      deliveryInfo: {
+        name: '',
+        cpf: '',
+        address: '',
+        city: '',
+        state: '',
+        zip: ''
+      }
     }
   },
   computed: {
-    ...mapState(['cart']),
-    ...mapGetters(['addresses', 'cartTotal', 'cartItemsCount']),
-    
-    canContinue() {
-      switch (this.currentStep) {
-        case 1: // Entrega
-          if (this.deliveryOption === 'delivery') {
-            return this.selectedAddress !== null
-          } else if (this.deliveryOption === 'pickup') {
-            return this.selectedStore !== null
-          }
-          return false
-        
-        case 2: // Pagamento
-          return this.selectedPaymentMethod !== ''
-        
-        default:
-          return true
-      }
-    },
-    
-    deliveryPrice() {
-      if (this.deliveryOption === 'delivery') {
-        return this.cartTotal >= 100 ? 0 : 15.90
-      }
-      return 0
-    },
-    
-    orderTotal() {
-      return this.cartTotal + this.deliveryPrice
+    ...mapGetters(['cartItemsCount', 'cartTotal']),
+    finalTotal() {
+      return this.deliveryType === 'delivery' ? this.cartTotal + 10 : this.cartTotal;
     }
   },
   methods: {
-    ...mapActions([
-      'fetchAddresses', 
-      'setDeliveryOption', 
-      'clearCart',
-      'createOrder'
-    ]),
-    
-    nextStep() {
-      if (this.canContinue) {
-        this.currentStep++
-        
-        // Salvar opções no store quando avançar
-        if (this.currentStep === 2) {
-          this.setDeliveryOption({
-            type: this.deliveryOption,
-            address: this.selectedAddress,
-            store: this.selectedStore,
-            price: this.deliveryPrice
-          })
+    ...mapActions(['clearCart']),
+    confirmOrder() {
+      let message = 'Pedido confirmado com sucesso!\n\n';
+      
+      if (this.deliveryType === 'delivery') {
+        if (!this.deliveryInfo.name || !this.deliveryInfo.address) {
+          alert('Por favor, preencha todos os campos de entrega.');
+          return;
         }
+        message += `Tipo: Entrega em domicílio\nNome: ${this.deliveryInfo.name}\nEndereço: ${this.deliveryInfo.address}`;
+      } else {
+        message += 'Tipo: Retirada na loja\nEndereço: Rua das Farmácias, 123 - Centro, São Paulo - SP';
       }
-    },
-    
-    previousStep() {
-      if (this.currentStep > 1) {
-        this.currentStep--
-      }
-    },
-    
-    updateDeliveryOption(option) {
-      this.deliveryOption = option
-    },
-    
-    updateSelectedAddress(address) {
-      this.selectedAddress = address
-    },
-    
-    updateSelectedStore(store) {
-      this.selectedStore = store
-    },
-    
-    updatePaymentMethod(method) {
-      this.selectedPaymentMethod = method
-    },
-    
-    
-async placeOrder() {
-  if (!this.canContinue) return
-  
-  this.processingOrder = true
-  
-  try {
-    const orderData = {
-      items: this.cart,
-      delivery: {
-        type: this.deliveryOption,
-        address: this.selectedAddress,
-        store: this.selectedStore,
-        price: this.deliveryPrice
-      },
-      payment: {
-        method: this.selectedPaymentMethod
-      },
-      total: this.orderTotal
-    }
-    
-    const order = await this.createOrder(orderData)
-    
-    // Redirecionar para página de confirmação
-    this.$router.push({
-      name: 'OrderConfirmation',
-      params: { orderId: order.id }
-    })
-    
-    this.$toast.success('Pedido realizado com sucesso!')
-    
-  } catch (error) {
-    console.error('Erro ao finalizar pedido:', error)
-    this.$toast.error('Erro ao finalizar pedido. Tente novamente.')
-  } finally {
-    this.processingOrder = false
-  }
-},
-    
-    continueShopping() {
-      this.$router.push('/products')
-    }
-  },
-  async mounted() {
-    // Carregar endereços se necessário
-    if (this.addresses.length === 0) {
-      await this.fetchAddresses()
-    }
-    
-    // Selecionar endereço principal por padrão
-    const defaultAddress = this.addresses.find(addr => addr.isDefault)
-    if (defaultAddress) {
-      this.selectedAddress = defaultAddress
-      this.deliveryOption = 'delivery'
-    }
-    
-    // Redirecionar se carrinho estiver vazio
-    if (this.cartItemsCount === 0 && this.currentStep < 4) {
-      this.$router.push('/cart')
-    }
-  },
-  
-  watch: {
-    cartItemsCount(newCount) {
-      if (newCount === 0 && this.currentStep < 4) {
-        this.$router.push('/cart')
-      }
+      
+      alert(message);
+      this.clearCart();
+      this.$router.push('/PaymentMethod');
     }
   }
 }
 </script>
-
-<style scoped>
-.checkout-section {
-  margin-bottom: 2rem;
-}
-
-.sticky-top {
-  position: sticky;
-  z-index: 100;
-}
-
-.checkout-navigation {
-  padding: 1rem 0;
-  border-top: 1px solid #dee2e6;
-}
-</style>

@@ -17,9 +17,28 @@
       <div class="row">
         <!-- Detalhes do Pedido -->
         <div class="col-lg-8">
-          <order-details :order="order" />
+          <!-- Detalhes do Pedido (simplificado) -->
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Detalhes do Pedido
+              </h5>
+            </div>
+            <div class="card-body">
+              <div v-for="item in order.items" :key="item.id" class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                <div class="d-flex align-items-center">
+                  <img :src="item.image" :alt="item.name" class="rounded me-3" width="60" height="60">
+                  <div>
+                    <h6 class="mb-1">{{ item.name }}</h6>
+                    <small class="text-muted">Quantidade: {{ item.quantity }}</small>
+                  </div>
+                </div>
+                <span class="fw-bold">R$ {{ (item.price * item.quantity).toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
           
-          <!-- Timeline do Pedido -->
+          <!-- Timeline do Pedido (simplificado) -->
           <div class="card mb-4">
             <div class="card-header bg-light">
               <h5 class="mb-0">
@@ -27,7 +46,36 @@
               </h5>
             </div>
             <div class="card-body">
-              <order-timeline :status="order.status" />
+              <div class="timeline">
+                <div class="timeline-item completed">
+                  <div class="timeline-marker bg-success"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-1">Pedido Confirmado</h6>
+                    <small class="text-muted">Seu pedido foi recebido com sucesso</small>
+                  </div>
+                </div>
+                <div class="timeline-item" :class="order.status !== 'confirmed' ? 'completed' : ''">
+                  <div class="timeline-marker" :class="order.status !== 'confirmed' ? 'bg-success' : 'bg-secondary'"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-1">Preparando Pedido</h6>
+                    <small class="text-muted">Estamos separando seus produtos</small>
+                  </div>
+                </div>
+                <div class="timeline-item" :class="order.status === 'shipped' || order.status === 'delivered' ? 'completed' : ''">
+                  <div class="timeline-marker" :class="order.status === 'shipped' || order.status === 'delivered' ? 'bg-success' : 'bg-secondary'"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-1">Enviado</h6>
+                    <small class="text-muted">Seu pedido está a caminho</small>
+                  </div>
+                </div>
+                <div class="timeline-item" :class="order.status === 'delivered' ? 'completed' : ''">
+                  <div class="timeline-marker" :class="order.status === 'delivered' ? 'bg-success' : 'bg-secondary'"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-1">Entregue</h6>
+                    <small class="text-muted">Pedido entregue com sucesso</small>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -39,7 +87,7 @@
               </h5>
             </div>
             <div class="card-body">
-              <div v-if="order.delivery.type === 'delivery'">
+              <div v-if="order.delivery && order.delivery.type === 'delivery'">
                 <h6>Entrega em Domicílio</h6>
                 <p class="mb-1">
                   <strong>Endereço:</strong><br>
@@ -56,7 +104,7 @@
                   {{ calculateDeliveryDate() }}
                 </p>
               </div>
-              <div v-else>
+              <div v-else-if="order.delivery && order.delivery.type === 'pickup'">
                 <h6>Retirada na Loja</h6>
                 <p class="mb-1">
                   <strong>Loja:</strong> {{ order.delivery.store.name }}<br>
@@ -66,6 +114,9 @@
                 <p class="mb-0">
                   <strong>Horário de Funcionamento:</strong> {{ order.delivery.store.hours }}
                 </p>
+              </div>
+              <div v-else>
+                <p class="text-muted">Informações de entrega não disponíveis.</p>
               </div>
             </div>
           </div>
@@ -88,7 +139,7 @@
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                   <span>Entrega:</span>
-                  <span>{{ order.delivery.price > 0 ? 'R$ ' + order.delivery.price.toFixed(2) : 'Grátis' }}</span>
+                  <span>{{ order.delivery && order.delivery.price > 0 ? 'R$ ' + order.delivery.price.toFixed(2) : 'Grátis' }}</span>
                 </div>
                 <div v-if="order.discount > 0" class="d-flex justify-content-between mb-2 text-success">
                   <span>Desconto:</span>
@@ -138,35 +189,58 @@
 </template>
 
 <script>
-import OrderDetails from '@/components/orders/OrderDetails.vue'
-import OrderTimeline from '@/components/orders/OrderTimeline.vue'
-
 export default {
   name: 'OrderConfirmation',
-  components: {
-    OrderDetails,
-    OrderTimeline
-  },
   data() {
     return {
-      order: null
-    }
-  },
-  computed: {
-    orderId() {
-      return this.$route.params.orderId
+      order: this.getSampleOrder() // Dados de exemplo
     }
   },
   methods: {
-    loadOrder() {
-      // Simular carregamento do pedido do store ou API
-      const savedOrder = this.$store.getters.orders.find(o => o.id === this.orderId)
-      
-      if (savedOrder) {
-        this.order = savedOrder
-      } else {
-        // Redirecionar se pedido não for encontrado
-        this.$router.push('/orders')
+    getSampleOrder() {
+      // Dados de exemplo para demonstração
+      return {
+        id: 'ORD' + Date.now().toString().slice(-6),
+        status: 'confirmed',
+        subtotal: 158.50,
+        discount: 10.00,
+        total: 148.50,
+        items: [
+          {
+            id: 1,
+            name: 'Paracetamol 500mg 20 comprimidos',
+            price: 12.50,
+            quantity: 2,
+            image: 'https://via.placeholder.com/60'
+          },
+          {
+            id: 2,
+            name: 'Dipirona 500mg 10 comprimidos',
+            price: 8.75,
+            quantity: 1,
+            image: 'https://via.placeholder.com/60'
+          },
+          {
+            id: 3,
+            name: 'Curativo Band-Aid 10 unidades',
+            price: 15.00,
+            quantity: 3,
+            image: 'https://via.placeholder.com/60'
+          }
+        ],
+        delivery: {
+          type: 'delivery',
+          price: 15.00,
+          address: {
+            street: 'Rua das Flores',
+            number: '123',
+            complement: 'Apto 101',
+            neighborhood: 'Centro',
+            city: 'Recife',
+            state: 'PE',
+            zipcode: '50000-000'
+          }
+        }
       }
     },
     
@@ -187,7 +261,8 @@ export default {
     }
   },
   mounted() {
-    this.loadOrder()
+    // Em uma aplicação real, aqui carregaria os dados do pedido da API ou Vuex
+    console.log('OrderConfirmation carregado')
   }
 }
 </script>
@@ -225,6 +300,39 @@ export default {
 .sticky-top {
   position: sticky;
   z-index: 100;
+}
+
+/* Timeline Styles */
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -30px;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+}
+
+.timeline-content {
+  padding: 10px;
+}
+
+.timeline-item.completed .timeline-content {
+  opacity: 1;
+}
+
+.timeline-item:not(.completed) .timeline-content {
+  opacity: 0.6;
 }
 
 @media print {
