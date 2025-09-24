@@ -34,8 +34,6 @@
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
   name: 'PrescriptionValidation',
   data() {
@@ -45,42 +43,46 @@ export default {
       selectedFile: null
     }
   },
-  async mounted() {
-    await this.fetchPrescriptions()
+  mounted() {
+    this.fetchPrescriptions()
   },
   methods: {
     async fetchPrescriptions() {
-      try {
-        const response = await axios.get('/api/admin/prescriptions', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-        })
-        this.prescriptions = response.data
-      } catch (err) {
-        // Mock data para testes
-        this.prescriptions = [
-          { 
-            id: 1, 
-            orderId: 1, 
-            customerName: 'João Silva', 
-            medication: 'Antibiótico Amoxicilina', 
-            date: '2023-10-01', 
-            status: 'Pendente', 
-            fileUrl: '/mock/receita1.pdf',
-            validatedAt: null 
-          },
-          { 
-            id: 2, 
-            orderId: 2, 
-            customerName: 'Maria Oliveira', 
-            medication: 'Paracetamol Controlado', 
-            date: '2023-10-02', 
-            status: 'Aprovada', 
-            fileUrl: '/mock/receita2.pdf',
-            validatedAt: '2023-10-02 14:30' 
-          }
-        ]
-      }
+      // Dados mockados
+      this.prescriptions = [
+        { 
+          id: 1, 
+          orderId: 1001, 
+          customerName: 'João Silva', 
+          medication: 'Antibiótico Amoxicilina', 
+          date: '2023-10-01', 
+          status: 'Pendente', 
+          fileUrl: '/mock/receita1.pdf',
+          validatedAt: null 
+        },
+        { 
+          id: 2, 
+          orderId: 1002, 
+          customerName: 'Maria Oliveira', 
+          medication: 'Paracetamol Controlado', 
+          date: '2023-10-02', 
+          status: 'Aprovada', 
+          fileUrl: '/mock/receita2.pdf',
+          validatedAt: '2023-10-02 14:30' 
+        },
+        { 
+          id: 3, 
+          orderId: 1003, 
+          customerName: 'Carlos Santos', 
+          medication: 'Dipirona Sódica', 
+          date: '2023-10-03', 
+          status: 'Pendente', 
+          fileUrl: '/mock/receita3.pdf',
+          validatedAt: null 
+        }
+      ]
     },
+
     getStatusClass(status) {
       return {
         'text-warning': status === 'Pendente',
@@ -88,54 +90,45 @@ export default {
         'text-danger': status === 'Rejeitada'
       }
     },
+
     async validatePrescription(id, status) {
       if (confirm(`Confirmar ${status.toLowerCase()} da receita?`)) {
-        try {
-          await axios.put(`/api/admin/prescriptions/${id}`, { status }, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-          })
-          const prescription = this.prescriptions.find(p => p.id === id)
-          if (prescription) {
-            prescription.status = status
-            prescription.validatedAt = new Date().toISOString()
-          }
-          alert(`Receita ${status.toLowerCase()} com sucesso!`)
-        } catch (err) {
-          alert('Erro ao validar receita')
+        const prescription = this.prescriptions.find(p => p.id === id)
+        if (prescription) {
+          prescription.status = status
+          prescription.validatedAt = new Date().toLocaleString('pt-BR')
         }
+        alert(`Receita ${status.toLowerCase()} com sucesso!`)
       }
     },
+
     uploadReplacement(id) {
       this.uploadingPrescriptionId = id
       this.selectedFile = null
     },
+
     handleFileUpload(event) {
       this.selectedFile = event.target.files[0]
     },
+
     async submitUpload() {
       if (!this.selectedFile) {
         alert('Selecione um arquivo')
         return
       }
-      const formData = new FormData()
-      formData.append('file', this.selectedFile)
-      try {
-        await axios.post(`/api/admin/prescriptions/${this.uploadingPrescriptionId}/upload`, formData, {
-          headers: { 
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${localStorage.getItem('authToken')}` 
-          }
-        })
-        const prescription = this.prescriptions.find(p => p.id === this.uploadingPrescriptionId)
-        if (prescription) {
-          prescription.fileUrl = URL.createObjectURL(this.selectedFile) // Mock URL
-        }
-        this.cancelUpload()
-        alert('Nova receita enviada para validação')
-      } catch (err) {
-        alert('Erro ao enviar arquivo')
+
+      // Simula upload mockado
+      const prescription = this.prescriptions.find(p => p.id === this.uploadingPrescriptionId)
+      if (prescription) {
+        prescription.fileUrl = URL.createObjectURL(this.selectedFile) // Mock URL
+        prescription.status = 'Pendente' // Volta para pendente após upload
+        prescription.validatedAt = null
       }
+      
+      this.cancelUpload()
+      alert('Nova receita enviada para validação!')
     },
+
     cancelUpload() {
       this.uploadingPrescriptionId = null
       this.selectedFile = null

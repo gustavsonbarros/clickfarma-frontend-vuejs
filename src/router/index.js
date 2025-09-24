@@ -1,4 +1,3 @@
-// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Products from '../views/Products.vue'
@@ -47,7 +46,8 @@ const routes = [
     path: '/register', 
     name: 'Register',
     component: Register 
-  },
+  },  
+  
   { 
     path: '/cart', 
     name: 'Cart',
@@ -109,7 +109,12 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/admin/products'
+        redirect: '/admin/dashboard'
+      },
+      {
+        path: 'dashboard',
+        name: 'AdminDashboardOverview',
+        component: { template: '<div>Bem-vindo ao Painel Administrativo!</div>' } // Componente simples para o overview
       },
       {
         path: 'products',

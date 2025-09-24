@@ -8,16 +8,43 @@
             <form @submit.prevent="login">
               <div class="form-group mb-3">
                 <label for="email">Email</label>
-                <input id="email" v-model="email" type="email" class="form-control" placeholder="admin@clickfarma.com" required />
+                <input 
+                  id="email" 
+                  v-model="email" 
+                  type="email" 
+                  class="form-control" 
+                  placeholder="admin@clickfarma.com" 
+                  required 
+                />
               </div>
               <div class="form-group mb-3">
                 <label for="password">Senha</label>
-                <input id="password" v-model="password" type="password" class="form-control" placeholder="senha123" required />
+                <input 
+                  id="password" 
+                  v-model="password" 
+                  type="password" 
+                  class="form-control" 
+                  placeholder="senha123" 
+                  required 
+                />
               </div>
-              <button type="submit" class="btn btn-primary w-100">Entrar no Painel</button>
+              <button 
+                type="submit" 
+                class="btn btn-primary w-100"
+                :disabled="isLoading"
+              >
+                <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                {{ isLoading ? 'Entrando...' : 'Entrar no Painel' }}
+              </button>
             </form>
             <p v-if="error" class="alert alert-danger mt-3 text-center">{{ error }}</p>
-            <p class="text-center mt-3"><router-link to="/login">Login como Usuário Comum</router-link></p>
+            <div class="mt-3 p-3 bg-light rounded">
+              <small class="text-muted">
+                <strong>Credenciais para teste:</strong><br>
+                Email: admin@clickfarma.com<br>
+                Senha: senha123
+              </small>
+            </div>
           </div>
         </div>
       </div>
@@ -26,36 +53,65 @@
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
   name: 'AdminLogin',
   data() {
     return {
       email: '',
       password: '',
-      error: ''
+      error: '',
+      isLoading: false
     }
   },
   methods: {
     async login() {
-      try {
-        const response = await axios.post('/api/auth/login', { email: this.email, password: this.password })
-        const { token, user } = response.data
-        if (user.role !== 'admin') {
-          throw new Error('Acesso negado: apenas admins')
+      this.isLoading = true
+      this.error = ''
+      
+      // Simula delay de rede
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Verificação mockada
+      if (this.email === 'admin@clickfarma.com' && this.password === 'senha123') {
+        // Dados mockados do usuário admin
+        const mockUser = {
+          id: 1,
+          name: 'Administrador ClickFarma',
+          email: 'admin@clickfarma.com',
+          role: 'admin',
+          avatar: null
         }
-        localStorage.setItem('authToken', token)
-        localStorage.setItem('user', JSON.stringify(user))
+        
+        const mockToken = 'mock-jwt-token-' + Date.now()
+        
+        // Salva no localStorage
+        localStorage.setItem('authToken', mockToken)
+        localStorage.setItem('user', JSON.stringify(mockUser))
+        
+        // Redireciona para o painel admin
         this.$router.push('/admin')
-      } catch (err) {
-        this.error = err.response?.data?.message || 'Credenciais inválidas. Use: admin@clickfarma.com / senha123'
+      } else {
+        this.error = 'Credenciais inválidas. Use: admin@clickfarma.com / senha123'
       }
+      
+      this.isLoading = false
     }
+  },
+  mounted() {
+    // Limpa dados de login ao carregar a página de login
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('user')
   }
 }
 </script>
 
 <style scoped>
-.card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.card { 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
 </style>

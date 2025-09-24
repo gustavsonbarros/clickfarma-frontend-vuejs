@@ -25,8 +25,6 @@
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
   name: 'InventoryManagement',
   data() {
@@ -41,41 +39,34 @@ export default {
       return this.products.filter(p => p.stock < this.lowStockThreshold)
     }
   },
-  async mounted() {
-    await this.fetchProducts()
+  mounted() {
+    this.fetchProducts()
   },
   methods: {
     async fetchProducts() {
-      try {
-        const response = await axios.get('/api/admin/products', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-        })
-        this.products = response.data
-      } catch (err) {
-        // Mock data para testes
-        this.products = [
-          { id: 1, name: 'Paracetamol 500mg', stock: 5 },
-          { id: 2, name: 'Amoxicilina 500mg', stock: 15 },
-          { id: 3, name: 'Ibuprofeno 400mg', stock: 8 }
-        ]
-      }
+      // Dados mockados
+      this.products = [
+        { id: 1, name: 'Paracetamol 500mg', stock: 5 },
+        { id: 2, name: 'Amoxicilina 500mg', stock: 15 },
+        { id: 3, name: 'Ibuprofeno 400mg', stock: 8 },
+        { id: 4, name: 'Omeprazol 20mg', stock: 25 },
+        { id: 5, name: 'Losartana 50mg', stock: 12 },
+        { id: 6, name: 'Metformina 850mg', stock: 18 }
+      ]
     },
+
     async updateStock(id) {
       const newStock = parseInt(this.stockUpdates[id])
       if (isNaN(newStock)) {
         alert('Insira uma quantidade válida')
         return
       }
-      try {
-        await axios.put(`/api/admin/products/${id}/stock`, { stock: newStock }, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-        })
-        const product = this.products.find(p => p.id === id)
-        if (product) product.stock = newStock
+
+      const product = this.products.find(p => p.id === id)
+      if (product) {
+        product.stock = newStock
         this.stockUpdates[id] = ''
-        alert('Estoque atualizado com sucesso')
-      } catch (err) {
-        alert('Erro ao atualizar estoque')
+        alert(`Estoque de ${product.name} atualizado para ${newStock} unidades!`)
       }
     }
   }

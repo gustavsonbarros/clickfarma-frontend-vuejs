@@ -28,8 +28,6 @@
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
   name: 'OrderManagement',
   data() {
@@ -40,31 +38,28 @@ export default {
       newStatus: 'Pendente'
     }
   },
-  async mounted() {
-    await this.fetchOrders()
+  mounted() {
+    this.fetchOrders()
   },
   methods: {
     async fetchOrders() {
-      try {
-        const response = await axios.get('/api/admin/orders', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-        })
-        this.orders = response.data
-        this.filteredOrders = this.orders
-      } catch (err) {
-        this.orders = [
-          { id: 1, customerName: 'João Silva', date: '2023-10-01', status: 'Pendente', total: 45.50 },
-          { id: 2, customerName: 'Maria Oliveira', date: '2023-10-02', status: 'Enviado', total: 120.00 }
-        ]
-        this.filteredOrders = this.orders
-      }
+      // Dados mockados
+      this.orders = [
+        { id: 1001, customerName: 'João Silva', date: '2023-10-01', status: 'Pendente', total: 45.50 },
+        { id: 1002, customerName: 'Maria Oliveira', date: '2023-10-02', status: 'Enviado', total: 120.00 },
+        { id: 1003, customerName: 'Carlos Santos', date: '2023-10-03', status: 'Entregue', total: 89.90 },
+        { id: 1004, customerName: 'Ana Costa', date: '2023-10-04', status: 'Pendente', total: 34.75 }
+      ]
+      this.filteredOrders = this.orders
     },
+
     updateFilteredOrders() {
       this.filteredOrders = this.orders.filter(order =>
         order.id.toString().includes(this.search) ||
         order.customerName.toLowerCase().includes(this.search.toLowerCase())
       )
     },
+
     getStatusClass(status) {
       return {
         'text-warning': status === 'Pendente',
@@ -73,16 +68,13 @@ export default {
         'text-danger': status === 'Cancelado'
       }
     },
+
     async updateStatus(id) {
-      try {
-        await axios.put(`/api/admin/orders/${id}`, { status: this.newStatus }, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-        })
-        const order = this.orders.find(o => o.id === id)
-        if (order) order.status = this.newStatus
+      const order = this.orders.find(o => o.id === id)
+      if (order) {
+        order.status = this.newStatus
         this.updateFilteredOrders()
-      } catch (err) {
-        alert('Erro ao atualizar status')
+        alert(`Status do pedido #${id} atualizado para "${this.newStatus}"!`)
       }
     }
   },
